@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PHARMACO — Pharmaceutical Management & Control
 
-## Getting Started
+Base de **Fase 1 (visual + estructural)** para un sistema administrativo farmacéutico con estética SaaS premium, identidad tecnológica y arquitectura escalable.
 
-First, run the development server:
+## Stack activo en esta fase
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Next.js 16 (App Router)
+- TypeScript
+- Tailwind CSS v4
+- Framer Motion (reservado para fases interactivas)
+- React Hook Form + Zod (reservado para formularios funcionales)
+- Lucide React
+
+> En esta iteración **no** se incluye lógica de Firebase ni autenticación.
+
+## Estructura escalable dentro de `src`
+
+```txt
+src/
+  app/
+    globals.css
+    layout.tsx
+    page.tsx
+  components/
+    branding/
+      pharmaco-mark.tsx
+    layout/
+      app-shell.tsx
+      side-nav.tsx
+      topbar.tsx
+    ui/
+      glass-panel.tsx
+      grid-background.tsx
+      section-heading.tsx
+      stat-card.tsx
+      status-chip.tsx
+  lib/
+    theme/
+      tokens.ts
+    utils/
+      cn.ts
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Objetivo de esta base
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Diseño oscuro elegante, corporativo y tecnológico.
+- Gradientes suaves con identidad farmacéutica.
+- Glassmorphism ligero y consistente.
+- Componentes reutilizables listos para crecer por módulos.
