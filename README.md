@@ -47,3 +47,14 @@ src/
 - Gradientes suaves con identidad farmacéutica.
 - Glassmorphism ligero y consistente.
 - Componentes reutilizables listos para crecer por módulos.
+
+
+## Login premium (mock)
+
+- Ruta: `/login`
+- Diseño en dos columnas (hero + formulario)
+- Branding fuerte PHARMACO + subtítulo Pharmaceutical Management & Control
+- Tarjeta glass para formulario
+- Animaciones sutiles con Framer Motion
+- Efecto reactivo al cursor sin bloquear interacciones (`pointer-events-none`)
+- Estado de carga elegante sin backend real (mock con delay)
