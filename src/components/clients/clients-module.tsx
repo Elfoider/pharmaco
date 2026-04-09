@@ -10,8 +10,8 @@ import { EmptyState } from "@/components/data/empty-state";
 import { ModuleHeader } from "@/components/data/module-header";
 import { ModuleStat } from "@/components/data/module-stat";
 import { GlassPanel } from "@/components/ui/glass-panel";
-import type { Client } from "@/lib/domain/types";
-import { clientsService } from "@/lib/modules/clients/service";
+import type { Client } from "@/modules/clients/types";
+import { clientsService } from "@/lib/services/clients.service";
 import type { ClientFormValues } from "@/lib/validations/client";
 
 const mockClients: Client[] = [
@@ -20,26 +20,13 @@ const mockClients: Client[] = [
     status: "active",
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    code: "CLI-001",
-    clientType: "persona",
-    fullName: "María Torres",
-    documentId: "V-12345678",
+    name: "María Torres",
+    document: "V-12345678",
     phone: "+58 412 000 0001",
     email: "maria.torres@correo.com",
     address: "Zona Centro",
-  },
-  {
-    id: "mock-2",
-    status: "active",
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    code: "CLI-002",
-    clientType: "empresa",
-    fullName: "Farmacia Central Norte",
-    documentId: "J-403001221",
-    phone: "+58 212 000 0002",
-    email: "compras@fcn.com",
-    address: "Avenida Principal",
+    birthDate: "1992-05-11",
+    notes: "Cliente frecuente",
   },
 ];
 
@@ -49,15 +36,17 @@ export function ClientsModule() {
   const [isLoading, setIsLoading] = useState(true);
   const [formMode, setFormMode] = useState<"create" | "edit">("create");
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [feedback, setFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
 
   async function loadClients(term = "") {
     setIsLoading(true);
 
     try {
-      const data = term ? await clientsService.search(term) : await clientsService.list();
+      const data = term ? await clientsService.search(term) : await clientsService.getAll();
       setClients(data.length ? data : mockClients);
     } catch {
       setClients(mockClients);
+      setFeedback({ kind: "error", message: "No fue posible sincronizar clientes desde Firestore." });
     } finally {
       setIsLoading(false);
     }
@@ -75,21 +64,34 @@ export function ClientsModule() {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const personCount = useMemo(
-    () => clients.filter((client) => client.clientType === "persona").length,
-    [clients],
-  );
+  const withEmailCount = useMemo(() => clients.filter((client) => Boolean(client.email)).length, [clients]);
 
   async function handleCreateOrUpdate(values: ClientFormValues) {
-    if (formMode === "create") {
-      await clientsService.create(values);
-    } else if (editingClient) {
-      await clientsService.update(editingClient.id, values);
-    }
+    try {
+      if (formMode === "create") {
+        await clientsService.create(values);
+        setFeedback({ kind: "success", message: "Cliente creado correctamente." });
+      } else if (editingClient) {
+        await clientsService.update(editingClient.id, values);
+        setFeedback({ kind: "success", message: "Cliente actualizado correctamente." });
+      }
 
-    setFormMode("create");
-    setEditingClient(null);
-    await loadClients(search);
+      setFormMode("create");
+      setEditingClient(null);
+      await loadClients(search);
+    } catch {
+      setFeedback({ kind: "error", message: "No fue posible guardar el cliente." });
+    }
+  }
+
+  async function handleDelete(client: Client) {
+    try {
+      await clientsService.delete(client.id);
+      setFeedback({ kind: "success", message: `Cliente ${client.name} eliminado.` });
+      await loadClients(search);
+    } catch {
+      setFeedback({ kind: "error", message: "No fue posible eliminar el cliente." });
+    }
   }
 
   function handleStartCreate() {
@@ -106,18 +108,28 @@ export function ClientsModule() {
     <main className="min-h-screen bg-slate-950 px-4 py-8 text-slate-100 sm:px-8">
       <div className="mx-auto max-w-7xl space-y-4">
         <ModuleHeader
-          title="Clientes"
-          subtitle="Listado, búsqueda, creación y edición básica de clientes para preparar el POS."
+          title="Clients"
+          subtitle="Listado, búsqueda en tiempo real, creación y edición básica para operaciones comerciales." 
           badge="Módulo operativo"
         />
 
         <div className="grid gap-4 sm:grid-cols-3">
           <ModuleStat label="Clientes" value={String(clients.length)} />
-          <ModuleStat label="Personas" value={String(personCount)} />
-          <ModuleStat label="Empresas" value={String(clients.length - personCount)} />
+          <ModuleStat label="Con email" value={String(withEmailCount)} />
+          <ModuleStat label="Sin email" value={String(clients.length - withEmailCount)} />
         </div>
 
         <ClientsToolbar search={search} onSearchChange={setSearch} onCreateClick={handleStartCreate} />
+
+        {feedback ? (
+          <GlassPanel
+            className={`border ${feedback.kind === "success" ? "border-emerald-300/30 bg-emerald-400/10" : "border-rose-300/30 bg-rose-400/10"}`}
+          >
+            <p className={`text-sm ${feedback.kind === "success" ? "text-emerald-100" : "text-rose-100"}`}>
+              {feedback.message}
+            </p>
+          </GlassPanel>
+        ) : null}
 
         <GlassPanel className="space-y-3">
           <div className="flex items-center gap-2">
@@ -135,11 +147,11 @@ export function ClientsModule() {
         {isLoading ? (
           <EmptyState title="Cargando clientes" description="Estamos preparando el listado de clientes..." />
         ) : clients.length ? (
-          <ClientsTable clients={clients} onEdit={handleStartEdit} />
+          <ClientsTable clients={clients} onEdit={handleStartEdit} onDelete={handleDelete} />
         ) : (
           <EmptyState
             title="Sin clientes aún"
-            description="Crea tu primer cliente para habilitar operaciones comerciales en POS." 
+            description="Presiona 'Nuevo cliente' para comenzar a construir tu base comercial." 
           />
         )}
       </div>

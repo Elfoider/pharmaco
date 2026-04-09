@@ -102,7 +102,7 @@ Roles iniciales soportados:
 - `src/lib/modules/*/service.ts`: servicios por módulo (`users`, `employees`, `clients`, `products`, `inventory`).
 
 ### Módulos iniciales del dashboard
-- `/dashboard/clientes`
+- `/dashboard/clients`
 - `/dashboard/empleados`
 - `/dashboard/inventario`
 - `/dashboard/pos`
@@ -162,3 +162,12 @@ Todos exponen base CRUD escalable: `create`, `getById`, `getAll`, `update`, `del
 - `inventory_movements`
 - `sales`
 - `sale_items`
+
+
+### Clients module (phase ready)
+
+- Ruta: `/dashboard/clients`
+- Tabla premium con búsqueda en tiempo real
+- Botón **Nuevo cliente**
+- Formulario crear/editar con React Hook Form + Zod
+- Feedback visual y estados de loading/vacío

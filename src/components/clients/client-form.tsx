@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import type { Client } from "@/lib/domain/types";
+import type { Client } from "@/modules/clients/types";
 import { clientSchema, type ClientFormValues } from "@/lib/validations/client";
 
 type ClientFormProps = {
@@ -15,6 +15,16 @@ type ClientFormProps = {
   onSubmitClient: (values: ClientFormValues) => Promise<void>;
 };
 
+const emptyValues: ClientFormValues = {
+  name: "",
+  document: "",
+  phone: "",
+  email: "",
+  address: "",
+  birthDate: "",
+  notes: "",
+};
+
 export function ClientForm({ mode, initialClient, onCancel, onSubmitClient }: ClientFormProps) {
   const {
     register,
@@ -22,40 +32,22 @@ export function ClientForm({ mode, initialClient, onCancel, onSubmitClient }: Cl
     setError,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<ClientFormValues>({
-    defaultValues: {
-      code: "",
-      clientType: "persona",
-      fullName: "",
-      documentId: "",
-      phone: "",
-      email: "",
-      address: "",
-    },
-  });
+  } = useForm<ClientFormValues>({ defaultValues: emptyValues });
 
   useEffect(() => {
     if (!initialClient) {
-      reset({
-        code: "",
-        clientType: "persona",
-        fullName: "",
-        documentId: "",
-        phone: "",
-        email: "",
-        address: "",
-      });
+      reset(emptyValues);
       return;
     }
 
     reset({
-      code: initialClient.code,
-      clientType: initialClient.clientType,
-      fullName: initialClient.fullName,
-      documentId: initialClient.documentId || "",
-      phone: initialClient.phone || "",
+      name: initialClient.name,
+      document: initialClient.document,
+      phone: initialClient.phone,
       email: initialClient.email || "",
       address: initialClient.address || "",
+      birthDate: initialClient.birthDate || "",
+      notes: initialClient.notes || "",
     });
   }, [initialClient, reset]);
 
@@ -64,12 +56,12 @@ export function ClientForm({ mode, initialClient, onCancel, onSubmitClient }: Cl
 
     if (!parsed.success) {
       const fields = parsed.error.flatten().fieldErrors;
-      if (fields.code?.[0]) setError("code", { message: fields.code[0] });
-      if (fields.fullName?.[0]) setError("fullName", { message: fields.fullName[0] });
-      if (fields.email?.[0]) setError("email", { message: fields.email[0] });
+      if (fields.name?.[0]) setError("name", { message: fields.name[0] });
+      if (fields.document?.[0]) setError("document", { message: fields.document[0] });
       if (fields.phone?.[0]) setError("phone", { message: fields.phone[0] });
-      if (fields.documentId?.[0]) setError("documentId", { message: fields.documentId[0] });
+      if (fields.email?.[0]) setError("email", { message: fields.email[0] });
       if (fields.address?.[0]) setError("address", { message: fields.address[0] });
+      if (fields.notes?.[0]) setError("notes", { message: fields.notes[0] });
       return;
     }
 
@@ -79,25 +71,29 @@ export function ClientForm({ mode, initialClient, onCancel, onSubmitClient }: Cl
   return (
     <form className="space-y-3" onSubmit={handleSubmit(onSubmit)}>
       <div className="grid gap-3 sm:grid-cols-2">
-        <Input placeholder="Código (CLI-001)" error={errors.code?.message} {...register("code")} />
-        <select
-          className="h-11 w-full rounded-xl border border-white/15 bg-slate-950/65 px-3 text-sm text-slate-50 outline-none transition focus:border-cyan-300/80 focus:ring-4 focus:ring-cyan-400/20"
-          {...register("clientType")}
-        >
-          <option value="persona">Persona</option>
-          <option value="empresa">Empresa</option>
-        </select>
+        <Input placeholder="Nombre" error={errors.name?.message} {...register("name")} />
+        <Input placeholder="Documento" error={errors.document?.message} {...register("document")} />
       </div>
-
-      <Input placeholder="Nombre completo" error={errors.fullName?.message} {...register("fullName")} />
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <Input placeholder="Documento" error={errors.documentId?.message} {...register("documentId")} />
         <Input placeholder="Teléfono" error={errors.phone?.message} {...register("phone")} />
+        <Input placeholder="Correo" error={errors.email?.message} {...register("email")} />
       </div>
 
-      <Input placeholder="Correo" error={errors.email?.message} {...register("email")} />
-      <Input placeholder="Dirección" error={errors.address?.message} {...register("address")} />
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Input placeholder="Dirección" error={errors.address?.message} {...register("address")} />
+        <Input type="date" error={errors.birthDate?.message} {...register("birthDate")} />
+      </div>
+
+      <div className="space-y-1.5">
+        <textarea
+          rows={3}
+          placeholder="Notas"
+          className="w-full rounded-xl border border-white/15 bg-slate-950/65 px-3 py-2 text-sm text-slate-50 outline-none transition placeholder:text-slate-400 focus:border-cyan-300/80 focus:ring-4 focus:ring-cyan-400/20"
+          {...register("notes")}
+        />
+        {errors.notes?.message ? <p className="text-xs text-rose-300">{errors.notes.message}</p> : null}
+      </div>
 
       <div className="flex justify-end gap-2">
         <Button type="button" className="bg-slate-700 text-slate-100 hover:bg-slate-600" onClick={onCancel}>

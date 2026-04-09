@@ -1,5 +1,5 @@
-import { ClientsModule } from "@/components/clients/clients-module";
+import { redirect } from "next/navigation";
 
-export default function ClientesPage() {
-  return <ClientsModule />;
+export default function ClientesLegacyRedirect() {
+  redirect("/dashboard/clients");
 }

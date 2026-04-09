@@ -38,13 +38,13 @@ export type Employee = BaseEntity & {
 };
 
 export type Client = BaseEntity & {
-  code: string;
-  clientType: "persona" | "empresa";
-  fullName: string;
-  documentId?: string;
-  phone?: string;
+  name: string;
+  document: string;
+  phone: string;
   email?: string;
   address?: string;
+  birthDate?: string;
+  notes?: string;
 };
 
 export type Batch = BaseEntity & {

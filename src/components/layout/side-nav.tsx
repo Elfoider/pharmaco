@@ -21,7 +21,7 @@ import { getRoleNavigation, type UserRole } from "@/lib/auth/roles";
 const iconMap: Record<string, ComponentType<{ className?: string }>> = {
   Dashboard: LayoutDashboard,
   POS: ShoppingCart,
-  Clientes: UserSquare2,
+  Clients: UserSquare2,
   Empleados: UsersRound,
   Inventario: Package,
   Horarios: CalendarClock,
