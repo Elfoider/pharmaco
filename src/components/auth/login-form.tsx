@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/lib/auth/use-auth";
 
 const loginSchema = z.object({
   email: z.email("Ingresa un correo válido"),
@@ -19,6 +20,7 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
   const [serverMessage, setServerMessage] = useState<string | null>(null);
+  const { login, isConfigured } = useAuth();
 
   const {
     register,
@@ -38,8 +40,12 @@ export function LoginForm() {
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1200));
-    setServerMessage("Demo mode: autenticación mock completada correctamente.");
+    try {
+      await login(values.email, values.password);
+      setServerMessage("Inicio de sesión correcto. Base de autenticación lista.");
+    } catch {
+      setServerMessage("No fue posible iniciar sesión. Verifica credenciales o configuración Firebase.");
+    }
   }
 
   return (
@@ -56,6 +62,11 @@ export function LoginForm() {
           </p>
           <h2 className="text-2xl font-semibold text-slate-50">Iniciar sesión</h2>
           <p className="text-sm text-slate-300/90">Ingresa con tus credenciales corporativas.</p>
+          {!isConfigured ? (
+            <p className="rounded-lg border border-amber-300/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-200">
+              Falta configuración Firebase en `.env.local`.
+            </p>
+          ) : null}
         </header>
 
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)}>
@@ -89,12 +100,12 @@ export function LoginForm() {
           </label>
 
           {serverMessage ? (
-            <p className="rounded-lg border border-emerald-300/30 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-200">
+            <p className="rounded-lg border border-cyan-300/30 bg-cyan-400/10 px-3 py-2 text-xs text-cyan-100">
               {serverMessage}
             </p>
           ) : null}
 
-          <Button type="submit" isLoading={isSubmitting} className="w-full">
+          <Button type="submit" isLoading={isSubmitting} className="w-full" disabled={!isConfigured}>
             Acceder al panel
           </Button>
         </form>

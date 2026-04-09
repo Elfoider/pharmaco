@@ -11,7 +11,7 @@ Base de **Fase 1 (visual + estructural)** para un sistema administrativo farmac�
 - React Hook Form + Zod (reservado para formularios funcionales)
 - Lucide React
 
-> En esta iteraci처n **no** se incluye l처gica de Firebase ni autenticaci처n.
+> Esta iteraci처n incluye base Firebase/Auth para login y lectura de perfil, sin paneles complejos.
 
 ## Estructura escalable dentro de `src`
 
@@ -57,4 +57,15 @@ src/
 - Tarjeta glass para formulario
 - Animaciones sutiles con Framer Motion
 - Efecto reactivo al cursor sin bloquear interacciones (`pointer-events-none`)
-- Estado de carga elegante sin backend real (mock con delay)
+- Estado de carga elegante conectado a `useAuth` (Firebase Auth base)
+
+
+## Firebase base
+
+1. Crea `.env.local` desde `.env.example`.
+2. Completa las variables `NEXT_PUBLIC_FIREBASE_*`.
+3. La inicializaci처n vive en `src/lib/firebase/client.ts`.
+4. El hook `useAuth` escucha sesi처n de Firebase Auth y carga perfil en Firestore (`users/{uid}`).
+
+Roles iniciales soportados:
+`super_admin`, `admin`, `farmaceutico`, `cajero`, `almacenista`, `rrhh`.

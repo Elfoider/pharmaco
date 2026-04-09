@@ -11,15 +11,24 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-function createFirebaseApp(): FirebaseApp {
-  if (!getApps().length) {
-    return initializeApp(firebaseConfig);
-  }
-
-  return getApp();
+function hasFirebaseEnv() {
+  return Boolean(
+    firebaseConfig.apiKey &&
+      firebaseConfig.authDomain &&
+      firebaseConfig.projectId &&
+      firebaseConfig.storageBucket &&
+      firebaseConfig.messagingSenderId &&
+      firebaseConfig.appId,
+  );
 }
 
-const app = createFirebaseApp();
+let app: FirebaseApp | null = null;
 
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+if (hasFirebaseEnv()) {
+  app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+}
+
+export const firebaseApp = app;
+export const auth = app ? getAuth(app) : null;
+export const db = app ? getFirestore(app) : null;
+export const isFirebaseConfigured = hasFirebaseEnv();
