@@ -1,36 +1,173 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PHARMACO — Pharmaceutical Management & Control
 
-## Getting Started
+Base de **Fase 1 (visual + estructural)** para un sistema administrativo farmacéutico con estética SaaS premium, identidad tecnológica y arquitectura escalable.
 
-First, run the development server:
+## Stack activo en esta fase
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Next.js 16 (App Router)
+- TypeScript
+- Tailwind CSS v4
+- Framer Motion (reservado para fases interactivas)
+- React Hook Form + Zod (reservado para formularios funcionales)
+- Lucide React
+
+> Esta iteración incluye base Firebase/Auth para login y lectura de perfil, sin paneles complejos.
+
+## Estructura escalable dentro de `src`
+
+```txt
+src/
+  app/
+    globals.css
+    layout.tsx
+    page.tsx
+  components/
+    branding/
+      pharmaco-mark.tsx
+    layout/
+      app-shell.tsx
+      side-nav.tsx
+      topbar.tsx
+    ui/
+      glass-panel.tsx
+      grid-background.tsx
+      section-heading.tsx
+      stat-card.tsx
+      status-chip.tsx
+  lib/
+    theme/
+      tokens.ts
+    utils/
+      cn.ts
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Objetivo de esta base
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Diseño oscuro elegante, corporativo y tecnológico.
+- Gradientes suaves con identidad farmacéutica.
+- Glassmorphism ligero y consistente.
+- Componentes reutilizables listos para crecer por módulos.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
+## Login premium (mock)
 
-To learn more about Next.js, take a look at the following resources:
+- Ruta: `/login`
+- Diseño en dos columnas (hero + formulario)
+- Branding fuerte PHARMACO + subtítulo Pharmaceutical Management & Control
+- Tarjeta glass para formulario
+- Animaciones sutiles con Framer Motion
+- Efecto reactivo al cursor sin bloquear interacciones (`pointer-events-none`)
+- Estado de carga elegante conectado a `useAuth` (Firebase Auth base)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Firebase base
 
-## Deploy on Vercel
+1. Crea `.env.local` desde `.env.example`.
+2. Completa las variables `NEXT_PUBLIC_FIREBASE_*`.
+3. La inicialización vive en `src/lib/firebase/client.ts`.
+4. El hook `useAuth` escucha sesión de Firebase Auth y carga perfil en Firestore (`users/{uid}`).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Roles iniciales soportados:
+`super_admin`, `admin`, `farmaceutico`, `cajero`, `almacenista`, `rrhh`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Roles y rutas protegidas
+
+- `UserRole`: `super_admin`, `admin`, `farmaceutico`, `cajero`, `almacenista`, `rrhh`.
+- Modelo `AppUser` en `src/lib/auth/types.ts`.
+- Cookies de sesión/rol en `src/lib/auth/session.ts`.
+- Guardas en `proxy.ts` para redirección si no hay sesión o si el rol no tiene acceso.
+- Dashboard base en `/dashboard` y ejemplo de restricción por rol en `/dashboard/rrhh`.
+- Sidebar dinámico según rol (`getRoleNavigation`).
+
+
+## Dashboard base premium
+
+- Sidebar moderno con navegación filtrada por rol.
+- Header superior con estado de rol activo y acciones rápidas.
+- Tarjetas de resumen mock (ventas, tickets, stock y tareas).
+- Catálogo visual listo para módulos: POS, Clientes, Empleados, Inventario, Horarios, Tareas e IA Asistente.
+- Diseño responsive y consistente con la estética del login.
+
+
+## Arquitectura de datos y módulos (fase actual)
+
+### Tipos de dominio
+- `src/lib/domain/types.ts`: `AppUser`, `Employee`, `Client`, `Product`, `Batch`, `InventoryMovement`.
+- `src/lib/domain/enums.ts`: enums de estado y clasificación de entidades.
+
+### Firestore (base escalable)
+- `src/lib/firestore/collections.ts`: catálogo central de colecciones.
+- `src/lib/firestore/base-service.ts`: utilidades genéricas para listar, obtener y crear documentos.
+- `src/lib/modules/*/service.ts`: servicios por módulo (`users`, `employees`, `clients`, `products`, `inventory`).
+
+### Módulos iniciales del dashboard
+- `/dashboard/clients`
+- `/dashboard/empleados`
+- `/dashboard/inventario`
+- `/dashboard/pos`
+
+Todos usan componentes reutilizables de tabla/estado vacío/estadísticas y mantienen la estética premium existente.
+
+
+### Clientes (implementado)
+
+- Tipo `Client` en dominio (`src/lib/domain/types.ts`).
+- Servicio Firestore con `list`, `search`, `create`, `update` (`src/lib/modules/clients/service.ts`).
+- Módulo UI con búsqueda por nombre/documento/teléfono, formulario con RHF + Zod, y edición básica.
+- Componentes reutilizables para toolbar, tabla y formulario.
+
+
+## Data architecture (Firestore-first)
+
+### Modelos TypeScript base
+- `AppUser`
+- `Employee`
+- `Client`
+- `Product`
+- `Batch`
+- `InventoryMovement`
+- `Sale`
+- `SaleItem`
+
+Ubicación principal: `src/modules/shared/types.ts` (con re-exports por módulo en `src/modules/*/types.ts`).
+
+### Estructura modular
+```txt
+src/modules/
+  clients/
+  employees/
+  products/
+  inventory/
+  sales/
+```
+
+### Servicios Firestore base
+Ubicación: `src/lib/services/`
+
+- `clients.service.ts`
+- `employees.service.ts`
+- `products.service.ts`
+- `inventory.service.ts`
+- `sales.service.ts`
+
+Todos exponen base CRUD escalable: `create`, `getById`, `getAll`, `update`, `delete`.
+
+### Colecciones preparadas
+- `users`
+- `clients`
+- `employees`
+- `products`
+- `batches`
+- `inventory_movements`
+- `sales`
+- `sale_items`
+
+
+### Clients module (phase ready)
+
+- Ruta: `/dashboard/clients`
+- Tabla premium con búsqueda en tiempo real
+- Botón **Nuevo cliente**
+- Formulario crear/editar con React Hook Form + Zod
+- Feedback visual y estados de loading/vacío
