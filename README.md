@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# PHARMACO — Pharmaceutical Management & Control
 
-## Getting Started
+Fase 1 de la base administrativa farmacéutica, construida con Next.js (App Router), TypeScript, Tailwind CSS, Firebase y una arquitectura escalable.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 + App Router
+- TypeScript
+- Tailwind CSS v4
+- Firebase App Hosting
+- Firebase Authentication
+- Cloud Firestore
+- Framer Motion
+- React Hook Form
+- Zod
+- Lucide React
+
+## Estructura propuesta (escalable)
+
+```txt
+src/
+  app/
+    (public)/
+      login/page.tsx
+    (dashboard)/
+      dashboard/page.tsx
+      layout.tsx
+    globals.css
+    layout.tsx
+    page.tsx
+  components/
+    auth/
+    branding/
+    dashboard/
+    ui/
+  lib/
+    auth/
+    firebase/
+    validations/
+    utils.ts
+proxy.ts
+apphosting.yaml
+.env.example
+```
+
+## Variables de entorno
+
+Copia `.env.example` a `.env.local` y completa los valores de Firebase:
+
+```bash
+cp .env.example .env.local
+```
+
+## Desarrollo
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrir [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Alcance de Fase 1
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Tema visual premium global.
+- Login dinámico con animaciones suaves (Framer Motion).
+- Firebase client listo para Authentication y Firestore.
+- Tipos de usuario y roles iniciales.
+- Protección de rutas con `proxy.ts`.
+- Dashboard base protegido.
 
-## Learn More
+## Despliegue en Firebase App Hosting
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Archivo base incluido: `apphosting.yaml`.
