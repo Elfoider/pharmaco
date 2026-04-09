@@ -2,7 +2,7 @@ import type { User } from "firebase/auth";
 
 import type { UserRole } from "@/lib/auth/roles";
 
-export type UserProfile = {
+export type AppUser = {
   uid: string;
   email: string;
   displayName: string;
@@ -14,7 +14,7 @@ export type UserProfile = {
 
 export type AuthState = {
   user: User | null;
-  profile: UserProfile | null;
+  appUser: AppUser | null;
   isLoading: boolean;
   error: string | null;
   isConfigured: boolean;

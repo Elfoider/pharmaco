@@ -9,12 +9,12 @@ import {
 import { useEffect, useState } from "react";
 
 import { getUserProfile } from "@/lib/auth/profile";
-import type { AuthState } from "@/lib/auth/types";
+import type { AuthState, AppUser } from "@/lib/auth/types";
 import { auth, isFirebaseConfigured } from "@/lib/firebase/client";
 
 const INITIAL_STATE: AuthState = {
   user: null,
-  profile: null,
+  appUser: null,
   isLoading: isFirebaseConfigured,
   error: isFirebaseConfigured
     ? null
@@ -34,7 +34,7 @@ export function useAuth() {
       if (!firebaseUser) {
         setState({
           user: null,
-          profile: null,
+          appUser: null,
           isLoading: false,
           error: null,
           isConfigured: true,
@@ -46,7 +46,7 @@ export function useAuth() {
         const profile = await getUserProfile(firebaseUser.uid);
         setState({
           user: firebaseUser,
-          profile,
+          appUser: profile,
           isLoading: false,
           error: null,
           isConfigured: true,
@@ -54,7 +54,7 @@ export function useAuth() {
       } catch {
         setState({
           user: firebaseUser,
-          profile: null,
+          appUser: null,
           isLoading: false,
           error: "No fue posible leer el perfil desde Firestore.",
           isConfigured: true,
@@ -65,12 +65,15 @@ export function useAuth() {
     return () => unsubscribe();
   }, []);
 
-  async function login(email: string, password: string): Promise<UserCredential> {
+  async function login(email: string, password: string): Promise<{ credential: UserCredential; appUser: AppUser | null }> {
     if (!auth) {
       throw new Error("Firebase no configurado");
     }
 
-    return signInWithEmailAndPassword(auth, email, password);
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+    const appUser = await getUserProfile(credential.user.uid);
+
+    return { credential, appUser };
   }
 
   async function logout() {

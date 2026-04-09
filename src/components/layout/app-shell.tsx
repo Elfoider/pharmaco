@@ -13,10 +13,10 @@ export function AppShell() {
     <main className="relative min-h-screen overflow-hidden bg-slate-950 px-4 py-6 text-slate-100 sm:px-8">
       <GridBackground />
       <div className="relative mx-auto flex w-full max-w-7xl flex-col gap-4">
-        <TopBar />
+        <TopBar role="admin" />
 
         <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-          <SideNav />
+          <SideNav role="admin" />
 
           <section className="space-y-4">
             <GlassPanel className="space-y-4">

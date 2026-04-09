@@ -2,17 +2,17 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { DashboardShell } from "@/components/dashboard/dashboard-shell";
-import { SESSION_ROLE_COOKIE_NAME } from "@/lib/auth/session";
-import { roleSchema } from "@/lib/auth/roles";
+import { ROLE_COOKIE } from "@/lib/auth/session";
+import { userRoleSchema } from "@/lib/auth/roles";
 
 export default async function DashboardPage() {
   const cookieStore = await cookies();
-  const roleCandidate = cookieStore.get(SESSION_ROLE_COOKIE_NAME)?.value;
-  const parsedRole = roleSchema.safeParse(roleCandidate);
+  const roleCandidate = cookieStore.get(ROLE_COOKIE)?.value;
+  const role = userRoleSchema.safeParse(roleCandidate);
 
-  if (!parsedRole.success) {
+  if (!role.success) {
     redirect("/login");
   }
 
-  return <DashboardShell role={parsedRole.data} />;
+  return <DashboardShell role={role.data} />;
 }

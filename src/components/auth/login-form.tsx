@@ -5,11 +5,14 @@ import { motion } from "framer-motion";
 import { LockKeyhole, Mail, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth/use-auth";
+import { setClientSession } from "@/lib/auth/session";
+import { userRoleSchema } from "@/lib/auth/roles";
 
 const loginSchema = z.object({
   email: z.email("Ingresa un correo válido"),
@@ -19,6 +22,7 @@ const loginSchema = z.object({
 type LoginValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
+  const router = useRouter();
   const [serverMessage, setServerMessage] = useState<string | null>(null);
   const { login, isConfigured } = useAuth();
 
@@ -41,8 +45,17 @@ export function LoginForm() {
     }
 
     try {
-      await login(values.email, values.password);
-      setServerMessage("Inicio de sesión correcto. Base de autenticación lista.");
+      const { appUser } = await login(values.email, values.password);
+      const role = userRoleSchema.safeParse(appUser?.role);
+
+      if (!role.success) {
+        setServerMessage("No se pudo resolver el rol del usuario. Revisa perfil en Firestore.");
+        return;
+      }
+
+      setClientSession(role.data);
+      router.push("/dashboard");
+      router.refresh();
     } catch {
       setServerMessage("No fue posible iniciar sesión. Verifica credenciales o configuración Firebase.");
     }

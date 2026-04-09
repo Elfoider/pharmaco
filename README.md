@@ -69,3 +69,13 @@ src/
 
 Roles iniciales soportados:
 `super_admin`, `admin`, `farmaceutico`, `cajero`, `almacenista`, `rrhh`.
+
+
+## Roles y rutas protegidas
+
+- `UserRole`: `super_admin`, `admin`, `farmaceutico`, `cajero`, `almacenista`, `rrhh`.
+- Modelo `AppUser` en `src/lib/auth/types.ts`.
+- Cookies de sesión/rol en `src/lib/auth/session.ts`.
+- Guardas en `proxy.ts` para redirección si no hay sesión o si el rol no tiene acceso.
+- Dashboard base en `/dashboard` y ejemplo de restricción por rol en `/dashboard/rrhh`.
+- Sidebar dinámico según rol (`getRoleNavigation`).

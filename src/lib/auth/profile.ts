@@ -2,9 +2,9 @@ import { doc, getDoc } from "firebase/firestore";
 
 import { db } from "@/lib/firebase/client";
 import { userRoleSchema } from "@/lib/auth/roles";
-import type { UserProfile } from "@/lib/auth/types";
+import type { AppUser } from "@/lib/auth/types";
 
-export async function getUserProfile(uid: string): Promise<UserProfile | null> {
+export async function getUserProfile(uid: string): Promise<AppUser | null> {
   if (!db) {
     return null;
   }
