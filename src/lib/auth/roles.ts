@@ -27,7 +27,7 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { label: "Clients", href: "/dashboard/clients", allowedRoles: ["super_admin", "admin", "cajero", "farmaceutico"] },
   { label: "Employees", href: "/dashboard/employees", allowedRoles: ["super_admin", "admin", "rrhh"] },
   { label: "Products", href: "/dashboard/products", allowedRoles: ["super_admin", "admin", "farmaceutico", "almacenista"] },
-  { label: "Inventario", href: "/dashboard/inventario", allowedRoles: ["super_admin", "admin", "almacenista", "farmaceutico"] },
+  { label: "Inventory", href: "/dashboard/inventory", allowedRoles: ["super_admin", "admin", "almacenista", "farmaceutico"] },
   { label: "Horarios", href: "/dashboard/rrhh", allowedRoles: ["super_admin", "admin", "rrhh"] },
   { label: "Tareas", href: "/dashboard", allowedRoles: ALL_ROLES },
   { label: "IA Asistente", href: "/dashboard", allowedRoles: ["super_admin", "admin", "farmaceutico", "rrhh"] },
@@ -39,6 +39,7 @@ export const PROTECTED_ROUTE_RULES: Readonly<Record<string, readonly UserRole[]>
   "/dashboard/clients": ["super_admin", "admin", "cajero", "farmaceutico"],
   "/dashboard/employees": ["super_admin", "admin", "rrhh"],
   "/dashboard/products": ["super_admin", "admin", "farmaceutico", "almacenista"],
+  "/dashboard/inventory": ["super_admin", "admin", "almacenista", "farmaceutico"],
   "/dashboard/inventario": ["super_admin", "admin", "almacenista", "farmaceutico"],
   "/dashboard/rrhh": ["super_admin", "admin", "rrhh"],
 };

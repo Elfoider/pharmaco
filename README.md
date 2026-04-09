@@ -189,3 +189,13 @@ Todos exponen base CRUD escalable: `create`, `getById`, `getAll`, `update`, `del
 - Formulario crear/editar producto
 - Badges visuales para récipe y controlado
 - Preparado para conectar inventario (sin lotes aún)
+
+
+### Inventory module (phase ready)
+
+- Ruta: `/dashboard/inventory`
+- Entrada de productos por lote (sin acoplar POS automático)
+- Ajuste manual con protección de stock negativo
+- Historial de movimientos (`entrada`, `ajuste`) por producto
+- Vista por producto con stock por lote
+- Alertas visuales de vencimiento para lotes próximos a expirar

@@ -25,7 +25,7 @@ const iconMap: Record<string, ComponentType<{ className?: string }>> = {
   Clients: UserSquare2,
   Employees: UsersRound,
   Products: Boxes,
-  Inventario: Package,
+  Inventory: Package,
   Horarios: CalendarClock,
   Tareas: ClipboardCheck,
   "IA Asistente": Bot,
