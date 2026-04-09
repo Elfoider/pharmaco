@@ -199,3 +199,13 @@ Todos exponen base CRUD escalable: `create`, `getById`, `getAll`, `update`, `del
 - Historial de movimientos (`entrada`, `ajuste`) por producto
 - Vista por producto con stock por lote
 - Alertas visuales de vencimiento para lotes próximos a expirar
+
+
+### POS module (phase 1 base)
+
+- Ruta: `/dashboard/pos`
+- Buscador rápido de productos con resultados instantáneos
+- Carrito local (agregar, incrementar/disminuir, eliminar, subtotal)
+- Selector de cliente existente con opción **Sin cliente**
+- Sin persistencia de ventas (intencional en esta fase)
+- Sin afectación de inventario (intencional en esta fase)
