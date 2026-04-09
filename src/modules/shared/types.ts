@@ -26,15 +26,14 @@ export type AppUser = BaseEntity & {
 };
 
 export type Employee = BaseEntity & {
-  code: string;
-  fullName: string;
-  documentId: string;
-  employeeType: "interno" | "externo";
-  area: string;
-  position: string;
-  phone?: string;
+  name: string;
+  document: string;
+  phone: string;
   email?: string;
-  userId?: string;
+  role: UserRole;
+  cargo: string;
+  joinDate: string;
+  branchId: string;
 };
 
 export type Client = BaseEntity & {

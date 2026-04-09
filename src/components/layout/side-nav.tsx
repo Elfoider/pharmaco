@@ -22,7 +22,7 @@ const iconMap: Record<string, ComponentType<{ className?: string }>> = {
   Dashboard: LayoutDashboard,
   POS: ShoppingCart,
   Clients: UserSquare2,
-  Empleados: UsersRound,
+  Employees: UsersRound,
   Inventario: Package,
   Horarios: CalendarClock,
   Tareas: ClipboardCheck,

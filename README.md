@@ -103,7 +103,7 @@ Roles iniciales soportados:
 
 ### Módulos iniciales del dashboard
 - `/dashboard/clients`
-- `/dashboard/empleados`
+- `/dashboard/employees`
 - `/dashboard/inventario`
 - `/dashboard/pos`
 
@@ -171,3 +171,12 @@ Todos exponen base CRUD escalable: `create`, `getById`, `getAll`, `update`, `del
 - Botón **Nuevo cliente**
 - Formulario crear/editar con React Hook Form + Zod
 - Feedback visual y estados de loading/vacío
+
+
+### Employees module (phase ready)
+
+- Ruta: `/dashboard/employees`
+- Tabla premium con filtros por rol
+- Badge visual por rol y estado activo/inactivo
+- Formulario crear/editar empleado con asignación de rol
+- Integración directa con roles del sistema (`UserRole`)
