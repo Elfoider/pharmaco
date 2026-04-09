@@ -1,5 +1,14 @@
 import type { ComponentType } from "react";
-import { ChartLine, ClipboardList, LayoutDashboard, Package, UsersRound, Wallet } from "lucide-react";
+import {
+  Bot,
+  CalendarClock,
+  ClipboardCheck,
+  LayoutDashboard,
+  Package,
+  ShoppingCart,
+  UserSquare2,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 
 import { GlassPanel } from "@/components/ui/glass-panel";
@@ -8,11 +17,13 @@ import { getRoleNavigation, type UserRole } from "@/lib/auth/roles";
 
 const iconMap: Record<string, ComponentType<{ className?: string }>> = {
   Dashboard: LayoutDashboard,
+  POS: ShoppingCart,
+  Clientes: UserSquare2,
+  Empleados: UsersRound,
   Inventario: Package,
-  Caja: Wallet,
-  Farmacia: ClipboardList,
-  RRHH: UsersRound,
-  Reportes: ChartLine,
+  Horarios: CalendarClock,
+  Tareas: ClipboardCheck,
+  "IA Asistente": Bot,
 };
 
 export function SideNav({ role }: { role: UserRole }) {
@@ -20,8 +31,9 @@ export function SideNav({ role }: { role: UserRole }) {
 
   return (
     <GlassPanel className="h-fit p-3">
-      <div className="mb-3 px-2">
+      <div className="mb-3 flex items-center justify-between px-2">
         <StatusChip tone="info">Rol: {role}</StatusChip>
+        <span className="text-[11px] text-slate-400">{items.length} módulos</span>
       </div>
       <nav className="space-y-1">
         {items.map((item) => {
@@ -31,9 +43,9 @@ export function SideNav({ role }: { role: UserRole }) {
             <Link
               key={item.label}
               href={item.href}
-              className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-slate-200 transition hover:bg-cyan-400/10 hover:text-cyan-100"
+              className="group flex w-full items-center gap-2 rounded-xl border border-transparent px-3 py-2 text-sm text-slate-200 transition hover:border-cyan-300/30 hover:bg-cyan-400/10 hover:text-cyan-100"
             >
-              <Icon className="h-4 w-4" />
+              <Icon className="h-4 w-4 text-slate-400 transition group-hover:text-cyan-300" />
               <span>{item.label}</span>
             </Link>
           );

@@ -1,13 +1,67 @@
-import { Building2, ShieldCheck, Stethoscope } from "lucide-react";
+import {
+  Bot,
+  CalendarClock,
+  ClipboardCheck,
+  Package,
+  ShoppingCart,
+  UserSquare2,
+  UsersRound,
+} from "lucide-react";
 
 import { GridBackground } from "@/components/ui/grid-background";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { SideNav } from "@/components/layout/side-nav";
-import { StatCard } from "@/components/ui/stat-card";
 import { TopBar } from "@/components/layout/topbar";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { StatusChip } from "@/components/ui/status-chip";
 import type { UserRole } from "@/lib/auth/roles";
+import { SummaryCard } from "@/components/dashboard/summary-card";
+import { ModuleCard } from "@/components/dashboard/module-card";
+
+const moduleCatalog = [
+  {
+    title: "POS",
+    description: "Facturación rápida, control de caja y ventas por turno con trazabilidad.",
+    icon: ShoppingCart,
+    status: "Mock ready",
+  },
+  {
+    title: "Clientes",
+    description: "Historial de compras, perfiles y seguimiento de fidelización.",
+    icon: UserSquare2,
+    status: "Mock ready",
+  },
+  {
+    title: "Empleados",
+    description: "Gestión de personal, estructura operativa y permisos por área.",
+    icon: UsersRound,
+    status: "Mock ready",
+  },
+  {
+    title: "Inventario",
+    description: "Entradas/salidas, stock crítico y control farmacéutico por lote.",
+    icon: Package,
+    status: "Mock ready",
+  },
+  {
+    title: "Horarios",
+    description: "Turnos, cobertura operativa y planificación semanal automatizable.",
+    icon: CalendarClock,
+    status: "Mock ready",
+  },
+  {
+    title: "Tareas",
+    description: "Checklist operativo diario con seguimiento por responsables.",
+    icon: ClipboardCheck,
+    status: "Mock ready",
+  },
+  {
+    title: "IA Asistente",
+    description: "Asistente contextual para decisiones operativas y productividad.",
+    icon: Bot,
+    status: "Mock ready",
+  },
+] as const;
 
 export function DashboardShell({ role }: { role: UserRole }) {
   return (
@@ -22,40 +76,35 @@ export function DashboardShell({ role }: { role: UserRole }) {
           <section className="space-y-4">
             <GlassPanel className="space-y-4">
               <SectionHeading
-                eyebrow="PHARMACO DASHBOARD"
-                title="Base protegida por sesión y rol"
-                description="El acceso y la navegación se ajustan según el rol autenticado del usuario."
+                eyebrow="PHARMACO CONTROL CENTER"
+                title="Dashboard base premium"
+                description="Vista administrativa inicial, diseñada para crecer por módulos sin perder consistencia visual ni rendimiento."
               />
               <div className="flex flex-wrap gap-2">
                 <StatusChip tone="success">Sesión activa</StatusChip>
-                <StatusChip tone="info">Ruta protegida</StatusChip>
-                <StatusChip>RBAC activo</StatusChip>
+                <StatusChip tone="info">Responsive</StatusChip>
+                <StatusChip>Escalable</StatusChip>
               </div>
             </GlassPanel>
 
-            <div className="grid gap-4 md:grid-cols-3">
-              <StatCard label="Rol actual" value={role} hint="Menú lateral filtrado por permisos." />
-              <StatCard label="Estado de sesión" value="Activa" hint="Si falta cookie, redirige al login." />
-              <StatCard label="Protección" value="Habilitada" hint="Guardas por ruta en proxy y layout." />
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <SummaryCard label="Ventas del día" value="$12,480" delta="+8.2% vs ayer" />
+              <SummaryCard label="Tickets POS" value="248" delta="+5.4% vs ayer" />
+              <SummaryCard label="Stock crítico" value="17" delta="-2.1% esta semana" />
+              <SummaryCard label="Tareas activas" value="31" delta="+12% hoy" />
             </div>
 
-            <GlassPanel className="grid gap-3 md:grid-cols-3">
-              <article className="space-y-2 rounded-xl border border-white/10 bg-slate-950/35 p-4">
-                <ShieldCheck className="h-5 w-5 text-cyan-300" />
-                <h3 className="text-sm font-semibold text-slate-100">Control de acceso</h3>
-                <p className="text-xs text-slate-300/90">Rutas privadas con validación de rol permitido.</p>
-              </article>
-              <article className="space-y-2 rounded-xl border border-white/10 bg-slate-950/35 p-4">
-                <Stethoscope className="h-5 w-5 text-cyan-300" />
-                <h3 className="text-sm font-semibold text-slate-100">Operación farmacéutica</h3>
-                <p className="text-xs text-slate-300/90">Estructura lista para flujos farmacéuticos por área.</p>
-              </article>
-              <article className="space-y-2 rounded-xl border border-white/10 bg-slate-950/35 p-4">
-                <Building2 className="h-5 w-5 text-cyan-300" />
-                <h3 className="text-sm font-semibold text-slate-100">Escalabilidad</h3>
-                <p className="text-xs text-slate-300/90">Arquitectura preparada para módulos enterprise.</p>
-              </article>
-            </GlassPanel>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {moduleCatalog.map((module) => (
+                <ModuleCard
+                  key={module.title}
+                  title={module.title}
+                  description={module.description}
+                  icon={module.icon}
+                  status={module.status}
+                />
+              ))}
+            </div>
           </section>
         </div>
       </div>

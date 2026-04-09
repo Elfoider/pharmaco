@@ -79,3 +79,12 @@ Roles iniciales soportados:
 - Guardas en `proxy.ts` para redirección si no hay sesión o si el rol no tiene acceso.
 - Dashboard base en `/dashboard` y ejemplo de restricción por rol en `/dashboard/rrhh`.
 - Sidebar dinámico según rol (`getRoleNavigation`).
+
+
+## Dashboard base premium
+
+- Sidebar moderno con navegación filtrada por rol.
+- Header superior con estado de rol activo y acciones rápidas.
+- Tarjetas de resumen mock (ventas, tickets, stock y tareas).
+- Catálogo visual listo para módulos: POS, Clientes, Empleados, Inventario, Horarios, Tareas e IA Asistente.
+- Diseño responsive y consistente con la estética del login.
