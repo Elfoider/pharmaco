@@ -180,3 +180,12 @@ Todos exponen base CRUD escalable: `create`, `getById`, `getAll`, `update`, `del
 - Badge visual por rol y estado activo/inactivo
 - Formulario crear/editar empleado con asignación de rol
 - Integración directa con roles del sistema (`UserRole`)
+
+
+### Products module (phase ready)
+
+- Ruta: `/dashboard/products`
+- Tabla premium con buscador y filtros
+- Formulario crear/editar producto
+- Badges visuales para récipe y controlado
+- Preparado para conectar inventario (sin lotes aún)

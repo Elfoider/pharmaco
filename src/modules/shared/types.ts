@@ -56,16 +56,18 @@ export type Batch = BaseEntity & {
 };
 
 export type Product = BaseEntity & {
-  sku: string;
-  barcode?: string;
   name: string;
-  category: "medicamento" | "insumo" | "dispositivo" | "cuidado_personal" | "otro";
-  unit: string;
-  salePrice: number;
-  purchasePrice: number;
+  genericName: string;
+  barcode: string;
+  sku: string;
+  category: string;
+  laboratory: string;
   requiresPrescription: boolean;
-  stockMin: number;
-  stockMax: number;
+  controlled: boolean;
+  costPrice: number;
+  salePrice: number;
+  stock: number;
+  active: boolean;
 };
 
 export type InventoryMovement = BaseEntity & {

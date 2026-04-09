@@ -10,6 +10,7 @@ import {
   ShoppingCart,
   UserSquare2,
   UsersRound,
+  Boxes,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -23,6 +24,7 @@ const iconMap: Record<string, ComponentType<{ className?: string }>> = {
   POS: ShoppingCart,
   Clients: UserSquare2,
   Employees: UsersRound,
+  Products: Boxes,
   Inventario: Package,
   Horarios: CalendarClock,
   Tareas: ClipboardCheck,
