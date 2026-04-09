@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { ROLE_COOKIE } from "@/lib/auth/session";
-import { userRoleSchema } from "@/lib/auth/roles";
+import { userRoleSchema, type UserRole } from "@/lib/auth/roles";
 
-const ALLOWED_ROLES = ["super_admin", "admin", "rrhh"] as const;
+const ALLOWED_ROLES: readonly UserRole[] = ["super_admin", "admin", "rrhh"];
 
 export default async function RrhhPage() {
   const cookieStore = await cookies();
