@@ -1,73 +1,49 @@
 # PHARMACO — Pharmaceutical Management & Control
 
-Fase 1 de la base administrativa farmacéutica, construida con Next.js (App Router), TypeScript, Tailwind CSS, Firebase y una arquitectura escalable.
+Base de **Fase 1 (visual + estructural)** para un sistema administrativo farmacéutico con estética SaaS premium, identidad tecnológica y arquitectura escalable.
 
-## Stack
+## Stack activo en esta fase
 
-- Next.js 16 + App Router
+- Next.js 16 (App Router)
 - TypeScript
 - Tailwind CSS v4
-- Firebase App Hosting
-- Firebase Authentication
-- Cloud Firestore
-- Framer Motion
-- React Hook Form
-- Zod
+- Framer Motion (reservado para fases interactivas)
+- React Hook Form + Zod (reservado para formularios funcionales)
 - Lucide React
 
-## Estructura propuesta (escalable)
+> En esta iteración **no** se incluye lógica de Firebase ni autenticación.
+
+## Estructura escalable dentro de `src`
 
 ```txt
 src/
   app/
-    (public)/
-      login/page.tsx
-    (dashboard)/
-      dashboard/page.tsx
-      layout.tsx
     globals.css
     layout.tsx
     page.tsx
   components/
-    auth/
     branding/
-    dashboard/
+      pharmaco-mark.tsx
+    layout/
+      app-shell.tsx
+      side-nav.tsx
+      topbar.tsx
     ui/
+      glass-panel.tsx
+      grid-background.tsx
+      section-heading.tsx
+      stat-card.tsx
+      status-chip.tsx
   lib/
-    auth/
-    firebase/
-    validations/
-    utils.ts
-proxy.ts
-apphosting.yaml
-.env.example
+    theme/
+      tokens.ts
+    utils/
+      cn.ts
 ```
 
-## Variables de entorno
+## Objetivo de esta base
 
-Copia `.env.example` a `.env.local` y completa los valores de Firebase:
-
-```bash
-cp .env.example .env.local
-```
-
-## Desarrollo
-
-```bash
-npm run dev
-```
-
-Abrir [http://localhost:3000](http://localhost:3000).
-
-## Alcance de Fase 1
-
-- Tema visual premium global.
-- Login dinámico con animaciones suaves (Framer Motion).
-- Firebase client listo para Authentication y Firestore.
-- Tipos de usuario y roles iniciales.
-- Protección de rutas con `proxy.ts`.
-- Dashboard base protegido.
-
-## Despliegue en Firebase App Hosting
-
-Archivo base incluido: `apphosting.yaml`.
+- Diseño oscuro elegante, corporativo y tecnológico.
+- Gradientes suaves con identidad farmacéutica.
+- Glassmorphism ligero y consistente.
+- Componentes reutilizables listos para crecer por módulos.

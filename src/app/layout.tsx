@@ -14,18 +14,15 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "PHARMACO Pharmaceutical Management & Control",
-  description: "Base administrativa farmacéutica con autenticación, roles y dashboard protegido.",
+  title: "PHARMACO | Pharmaceutical Management & Control",
+  description:
+    "Base visual y estructural SaaS premium para sistema administrativo farmacéutico empresarial.",
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
-      <body className="min-h-full bg-slate-950 font-sans text-slate-100">{children}</body>
+      <body className="min-h-full bg-background text-foreground">{children}</body>
     </html>
   );
 }
