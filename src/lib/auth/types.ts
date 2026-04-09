@@ -1,16 +1,8 @@
 import type { User } from "firebase/auth";
 
-import type { UserRole } from "@/lib/auth/roles";
+import type { AppUser } from "@/lib/domain/types";
 
-export type AppUser = {
-  uid: string;
-  email: string;
-  displayName: string;
-  role: UserRole;
-  isActive: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-};
+export type { AppUser } from "@/lib/domain/types";
 
 export type AuthState = {
   user: User | null;

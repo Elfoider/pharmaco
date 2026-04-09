@@ -20,12 +20,14 @@ export async function getUserProfile(uid: string): Promise<AppUser | null> {
   const parsedRole = userRoleSchema.safeParse(data.role);
 
   return {
+    id: profileSnap.id,
+    status: data.status === "inactive" || data.status === "archived" ? data.status : "active",
     uid,
     email: typeof data.email === "string" ? data.email : "",
     displayName: typeof data.displayName === "string" ? data.displayName : "",
     role: parsedRole.success ? parsedRole.data : "cajero",
     isActive: data.isActive !== false,
-    createdAt: typeof data.createdAt === "string" ? data.createdAt : undefined,
-    updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : undefined,
+    createdAt: typeof data.createdAt === "string" ? data.createdAt : "",
+    updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : "",
   };
 }

@@ -88,3 +88,23 @@ Roles iniciales soportados:
 - Tarjetas de resumen mock (ventas, tickets, stock y tareas).
 - Catálogo visual listo para módulos: POS, Clientes, Empleados, Inventario, Horarios, Tareas e IA Asistente.
 - Diseño responsive y consistente con la estética del login.
+
+
+## Arquitectura de datos y módulos (fase actual)
+
+### Tipos de dominio
+- `src/lib/domain/types.ts`: `AppUser`, `Employee`, `Client`, `Product`, `Batch`, `InventoryMovement`.
+- `src/lib/domain/enums.ts`: enums de estado y clasificación de entidades.
+
+### Firestore (base escalable)
+- `src/lib/firestore/collections.ts`: catálogo central de colecciones.
+- `src/lib/firestore/base-service.ts`: utilidades genéricas para listar, obtener y crear documentos.
+- `src/lib/modules/*/service.ts`: servicios por módulo (`users`, `employees`, `clients`, `products`, `inventory`).
+
+### Módulos iniciales del dashboard
+- `/dashboard/clientes`
+- `/dashboard/empleados`
+- `/dashboard/inventario`
+- `/dashboard/pos`
+
+Todos usan componentes reutilizables de tabla/estado vacío/estadísticas y mantienen la estética premium existente.
