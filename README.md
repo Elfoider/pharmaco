@@ -209,5 +209,7 @@ Todos exponen base CRUD escalable: `create`, `getById`, `getAll`, `update`, `del
 - Selector de cliente existente con opción **Sin cliente**
 - Cierre de venta con botón **Finalizar venta**
 - Persistencia en Firestore en colecciones `sales` y `sale_items` usando transacción
+- Integración con inventario al cierre: descuento FIFO por lote (primero en vencer)
+- Creación automática de movimiento de inventario tipo `salida`
+- Validaciones de stock y bloqueo preventivo para evitar stock negativo
 - Loading y confirmación visual al cerrar venta + reset de carrito
-- Sin afectación de inventario (intencional en esta fase)

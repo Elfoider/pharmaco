@@ -12,6 +12,7 @@ type PosCartProps = {
   lines: CartLine[];
   paymentMethodLabel: string;
   isClosing: boolean;
+  hasStockIssues: boolean;
   onIncrement: (productId: string) => void;
   onDecrement: (productId: string) => void;
   onRemove: (productId: string) => void;
@@ -22,6 +23,7 @@ export function PosCart({
   lines,
   paymentMethodLabel,
   isClosing,
+  hasStockIssues,
   onIncrement,
   onDecrement,
   onRemove,
@@ -78,7 +80,7 @@ export function PosCart({
       <Button
         type="button"
         className="mt-3 h-10 w-full"
-        disabled={!lines.length || isClosing}
+        disabled={!lines.length || isClosing || hasStockIssues}
         onClick={onFinalizeSale}
       >
         {isClosing ? "Procesando..." : "Finalizar venta"}

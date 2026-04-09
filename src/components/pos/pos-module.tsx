@@ -133,6 +133,20 @@ export function PosModule() {
     () => (selectedClientId === "none" ? null : allClients.find((client) => client.id === selectedClientId) ?? null),
     [allClients, selectedClientId],
   );
+  const stockIssues = useMemo(() => {
+    return cart
+      .map((line) => {
+        const product = allProducts.find((candidate) => candidate.id === line.product.id) ?? line.product;
+        const available = product.stock;
+        return {
+          productId: line.product.id,
+          productName: line.product.name,
+          requested: line.quantity,
+          available,
+        };
+      })
+      .filter((issue) => issue.requested > issue.available);
+  }, [allProducts, cart]);
 
   function addToCart(product: Product) {
     setCart((current) => {
@@ -208,7 +222,7 @@ export function PosModule() {
       <div className="mx-auto max-w-7xl space-y-4">
         <ModuleHeader
           title="POS"
-          subtitle="Base de caja ultra rápida con cierre de venta, confirmación visual y sin tocar inventario."
+          subtitle="Base de caja ultra rápida con cierre seguro, descuento FIFO y consistencia transaccional."
           badge="Fase 1"
         />
 
@@ -272,6 +286,19 @@ export function PosModule() {
               </GlassPanel>
             ) : null}
 
+            {stockIssues.length ? (
+              <GlassPanel className="border border-amber-300/35 bg-amber-400/10">
+                <p className="text-sm font-medium text-amber-100">Stock insuficiente para cerrar la venta.</p>
+                <ul className="mt-1 space-y-1 text-xs text-amber-50">
+                  {stockIssues.map((issue) => (
+                    <li key={issue.productId}>
+                      {issue.productName}: solicitado {issue.requested}, disponible {issue.available}.
+                    </li>
+                  ))}
+                </ul>
+              </GlassPanel>
+            ) : null}
+
             {isLoading ? (
               <EmptyState title="Cargando POS" description="Preparando catálogo y clientes..." />
             ) : filteredProducts.length ? (
@@ -285,6 +312,7 @@ export function PosModule() {
             lines={cart}
             paymentMethodLabel={paymentMethod}
             isClosing={isClosingSale}
+            hasStockIssues={stockIssues.length > 0}
             onIncrement={increment}
             onDecrement={decrement}
             onRemove={remove}
