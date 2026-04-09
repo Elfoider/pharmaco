@@ -11,8 +11,11 @@ import { PosProductResults } from "@/components/pos/pos-product-results";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { clientsService } from "@/lib/services/clients.service";
 import { productsService } from "@/lib/services/products.service";
+import { salesService } from "@/lib/services/sales.service";
 import type { Client } from "@/modules/clients/types";
 import type { Product } from "@/modules/products/types";
+
+type PaymentMethod = "cash" | "card" | "transfer" | "mixed";
 
 const mockProducts: Product[] = [
   {
@@ -78,7 +81,10 @@ export function PosModule() {
   const [allClients, setAllClients] = useState<Client[]>([]);
   const [search, setSearch] = useState("");
   const [selectedClientId, setSelectedClientId] = useState("none");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cash");
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [isClosingSale, setIsClosingSale] = useState(false);
+  const [feedback, setFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -161,12 +167,48 @@ export function PosModule() {
     setCart((current) => current.filter((line) => line.product.id !== productId));
   }
 
+  async function finalizeSale() {
+    if (!cart.length || isClosingSale) {
+      return;
+    }
+
+    setIsClosingSale(true);
+    setFeedback(null);
+
+    try {
+      const result = await salesService.closeSale({
+        clientId: selectedClient?.id,
+        paymentMethod,
+        items: cart.map((line) => ({
+          productId: line.product.id,
+          quantity: line.quantity,
+          unitPrice: line.product.salePrice,
+        })),
+      });
+
+      setFeedback({
+        kind: "success",
+        message: `Venta ${result.saleNumber} guardada correctamente por $${result.total.toFixed(2)}.`,
+      });
+      setCart([]);
+      setSelectedClientId("none");
+      setPaymentMethod("cash");
+    } catch (error) {
+      setFeedback({
+        kind: "error",
+        message: error instanceof Error ? error.message : "No fue posible finalizar la venta.",
+      });
+    } finally {
+      setIsClosingSale(false);
+    }
+  }
+
   return (
     <main className="min-h-screen bg-slate-950 px-4 py-6 text-slate-100 sm:px-8">
       <div className="mx-auto max-w-7xl space-y-4">
         <ModuleHeader
           title="POS"
-          subtitle="Base de caja ultra rápida: búsqueda, carrito y cliente sin persistir ventas aún."
+          subtitle="Base de caja ultra rápida con cierre de venta, confirmación visual y sin tocar inventario."
           badge="Fase 1"
         />
 
@@ -174,7 +216,7 @@ export function PosModule() {
           <ModuleStat label="Resultados" value={String(filteredProducts.length)} />
           <ModuleStat label="Items carrito" value={String(cart.reduce((sum, line) => sum + line.quantity, 0))} />
           <ModuleStat label="Cliente" value={selectedClient ? "Asignado" : "Sin cliente"} />
-          <ModuleStat label="Estado" value="No persiste" />
+          <ModuleStat label="Estado" value="Persistencia lista" />
         </div>
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -206,7 +248,29 @@ export function PosModule() {
                 </select>
                 {selectedClient ? <p className="text-xs text-cyan-200">Cliente: {selectedClient.name}</p> : null}
               </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-xs uppercase tracking-[0.16em] text-slate-400">Pago:</span>
+                <select
+                  value={paymentMethod}
+                  onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}
+                  className="h-9 rounded-lg border border-white/15 bg-slate-950/65 px-3 text-xs text-slate-100 outline-none transition focus:border-cyan-300/80"
+                >
+                  <option value="cash">Efectivo</option>
+                  <option value="card">Tarjeta</option>
+                  <option value="transfer">Transferencia</option>
+                  <option value="mixed">Mixto</option>
+                </select>
+              </div>
             </GlassPanel>
+
+            {feedback ? (
+              <GlassPanel
+                className={`border ${feedback.kind === "success" ? "border-emerald-300/30 bg-emerald-400/10" : "border-rose-300/30 bg-rose-400/10"}`}
+              >
+                <p className={`text-sm ${feedback.kind === "success" ? "text-emerald-100" : "text-rose-100"}`}>{feedback.message}</p>
+              </GlassPanel>
+            ) : null}
 
             {isLoading ? (
               <EmptyState title="Cargando POS" description="Preparando catálogo y clientes..." />
@@ -217,7 +281,15 @@ export function PosModule() {
             )}
           </section>
 
-          <PosCart lines={cart} onIncrement={increment} onDecrement={decrement} onRemove={remove} />
+          <PosCart
+            lines={cart}
+            paymentMethodLabel={paymentMethod}
+            isClosing={isClosingSale}
+            onIncrement={increment}
+            onDecrement={decrement}
+            onRemove={remove}
+            onFinalizeSale={finalizeSale}
+          />
         </div>
       </div>
     </main>

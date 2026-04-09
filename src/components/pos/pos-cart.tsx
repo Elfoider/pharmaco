@@ -10,12 +10,23 @@ export type CartLine = {
 
 type PosCartProps = {
   lines: CartLine[];
+  paymentMethodLabel: string;
+  isClosing: boolean;
   onIncrement: (productId: string) => void;
   onDecrement: (productId: string) => void;
   onRemove: (productId: string) => void;
+  onFinalizeSale: () => void;
 };
 
-export function PosCart({ lines, onIncrement, onDecrement, onRemove }: PosCartProps) {
+export function PosCart({
+  lines,
+  paymentMethodLabel,
+  isClosing,
+  onIncrement,
+  onDecrement,
+  onRemove,
+  onFinalizeSale,
+}: PosCartProps) {
   const subtotal = lines.reduce((sum, line) => sum + line.product.salePrice * line.quantity, 0);
 
   return (
@@ -59,9 +70,19 @@ export function PosCart({ lines, onIncrement, onDecrement, onRemove }: PosCartPr
       </div>
 
       <div className="mt-3 rounded-xl border border-cyan-300/25 bg-cyan-400/10 p-3">
+        <p className="text-[11px] uppercase tracking-[0.16em] text-cyan-200">Método: {paymentMethodLabel}</p>
         <p className="text-xs uppercase tracking-[0.16em] text-cyan-100">Subtotal</p>
         <p className="text-xl font-semibold text-cyan-50">${subtotal.toFixed(2)}</p>
       </div>
+
+      <Button
+        type="button"
+        className="mt-3 h-10 w-full"
+        disabled={!lines.length || isClosing}
+        onClick={onFinalizeSale}
+      >
+        {isClosing ? "Procesando..." : "Finalizar venta"}
+      </Button>
     </div>
   );
 }

@@ -207,5 +207,7 @@ Todos exponen base CRUD escalable: `create`, `getById`, `getAll`, `update`, `del
 - Buscador rápido de productos con resultados instantáneos
 - Carrito local (agregar, incrementar/disminuir, eliminar, subtotal)
 - Selector de cliente existente con opción **Sin cliente**
-- Sin persistencia de ventas (intencional en esta fase)
+- Cierre de venta con botón **Finalizar venta**
+- Persistencia en Firestore en colecciones `sales` y `sale_items` usando transacción
+- Loading y confirmación visual al cerrar venta + reset de carrito
 - Sin afectación de inventario (intencional en esta fase)
