@@ -108,3 +108,11 @@ Roles iniciales soportados:
 - `/dashboard/pos`
 
 Todos usan componentes reutilizables de tabla/estado vacío/estadísticas y mantienen la estética premium existente.
+
+
+### Clientes (implementado)
+
+- Tipo `Client` en dominio (`src/lib/domain/types.ts`).
+- Servicio Firestore con `list`, `search`, `create`, `update` (`src/lib/modules/clients/service.ts`).
+- Módulo UI con búsqueda por nombre/documento/teléfono, formulario con RHF + Zod, y edición básica.
+- Componentes reutilizables para toolbar, tabla y formulario.
