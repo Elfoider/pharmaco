@@ -116,3 +116,49 @@ Todos usan componentes reutilizables de tabla/estado vacío/estadísticas y mant
 - Servicio Firestore con `list`, `search`, `create`, `update` (`src/lib/modules/clients/service.ts`).
 - Módulo UI con búsqueda por nombre/documento/teléfono, formulario con RHF + Zod, y edición básica.
 - Componentes reutilizables para toolbar, tabla y formulario.
+
+
+## Data architecture (Firestore-first)
+
+### Modelos TypeScript base
+- `AppUser`
+- `Employee`
+- `Client`
+- `Product`
+- `Batch`
+- `InventoryMovement`
+- `Sale`
+- `SaleItem`
+
+Ubicación principal: `src/modules/shared/types.ts` (con re-exports por módulo en `src/modules/*/types.ts`).
+
+### Estructura modular
+```txt
+src/modules/
+  clients/
+  employees/
+  products/
+  inventory/
+  sales/
+```
+
+### Servicios Firestore base
+Ubicación: `src/lib/services/`
+
+- `clients.service.ts`
+- `employees.service.ts`
+- `products.service.ts`
+- `inventory.service.ts`
+- `sales.service.ts`
+
+Todos exponen base CRUD escalable: `create`, `getById`, `getAll`, `update`, `delete`.
+
+### Colecciones preparadas
+- `users`
+- `clients`
+- `employees`
+- `products`
+- `batches`
+- `inventory_movements`
+- `sales`
+- `sale_items`
