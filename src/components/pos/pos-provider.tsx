@@ -339,6 +339,9 @@ export function PosProvider({ children }: { children: ReactNode }) {
     if (state.taxPercent > 100) {
       validationMessages.push("El impuesto configurado parece inválido (>100%).");
     }
+    if (state.cart.some((line) => line.quantity > line.product.stock)) {
+      validationMessages.push("Hay productos con cantidad mayor al stock disponible.");
+    }
 
     return {
       state,

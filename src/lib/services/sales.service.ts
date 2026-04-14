@@ -1,4 +1,4 @@
-import { collection, doc, runTransaction, serverTimestamp } from "firebase/firestore";
+import { collection, doc, getDocs, orderBy, query, runTransaction, serverTimestamp, where } from "firebase/firestore";
 
 import { auth, db } from "@/lib/firebase/client";
 import type { Sale, SaleItem } from "@/modules/sales/types";
@@ -54,6 +54,23 @@ export const salesService = {
     const firestore = assertDb();
     const now = new Date().toISOString();
     const saleNumber = createSaleNumber();
+    const batchesCollection = collection(firestore, COLLECTIONS.batches);
+    const productsCollection = collection(firestore, COLLECTIONS.products);
+    const movementsCollection = collection(firestore, COLLECTIONS.inventoryMovements);
+    const productIds = [...new Set(input.items.map((item) => item.productId))];
+    const batchOrderByProduct = new Map<string, string[]>();
+
+    for (const productId of productIds) {
+      const batchesSnap = await getDocs(
+        query(
+          batchesCollection,
+          where("productId", "==", productId),
+          orderBy("expiryDate", "asc"),
+        ),
+      );
+
+      batchOrderByProduct.set(productId, batchesSnap.docs.map((item) => item.id));
+    }
 
     return runTransaction(firestore, async (transaction) => {
       const salesCollection = collection(firestore, COLLECTIONS.sales);
@@ -79,6 +96,82 @@ export const salesService = {
       transaction.set(saleRef, salePayload);
 
       for (const item of input.items) {
+        const batchIds = batchOrderByProduct.get(item.productId) ?? [];
+        const availableBatches: Array<{ id: string; stock: number }> = [];
+
+        for (const batchId of batchIds) {
+          const batchRef = doc(batchesCollection, batchId);
+          const batchSnap = await transaction.get(batchRef);
+          if (!batchSnap.exists()) {
+            continue;
+          }
+
+          const stock = Number(batchSnap.data().stock ?? 0);
+          if (!Number.isFinite(stock) || stock <= 0) {
+            continue;
+          }
+
+          availableBatches.push({ id: batchId, stock });
+        }
+
+        const availableStock = availableBatches.reduce((sum, batch) => sum + batch.stock, 0);
+        if (availableStock < item.qty) {
+          throw new Error(`Stock insuficiente para ${item.productName}`);
+        }
+
+        let pendingDiscount = item.qty;
+        for (const batch of availableBatches) {
+          if (pendingDiscount <= 0) {
+            break;
+          }
+
+          const discountQty = Math.min(batch.stock, pendingDiscount);
+          const nextBatchStock = batch.stock - discountQty;
+          if (nextBatchStock < 0) {
+            throw new Error(`Stock negativo detectado en lote ${batch.id}`);
+          }
+
+          transaction.update(doc(batchesCollection, batch.id), {
+            stock: nextBatchStock,
+            updatedAt: now,
+            updatedAtServer: serverTimestamp(),
+          });
+
+          const movementRef = doc(movementsCollection);
+          transaction.set(movementRef, {
+            productId: item.productId,
+            batchId: batch.id,
+            quantity: discountQty,
+            type: "salida",
+            reason: "venta POS",
+            referenceSaleId: saleRef.id,
+            createdAt: now,
+            createdAtServer: serverTimestamp(),
+          });
+
+          pendingDiscount -= discountQty;
+        }
+
+        if (pendingDiscount > 0) {
+          throw new Error(`No fue posible aplicar FIFO para ${item.productName}`);
+        }
+
+        const productRef = doc(productsCollection, item.productId);
+        const productSnap = await transaction.get(productRef);
+        if (!productSnap.exists()) {
+          throw new Error(`Producto no existe: ${item.productId}`);
+        }
+        const currentProductStock = Number(productSnap.data().stock ?? 0);
+        const nextProductStock = currentProductStock - item.qty;
+        if (!Number.isFinite(nextProductStock) || nextProductStock < 0) {
+          throw new Error(`Stock insuficiente para ${item.productName}`);
+        }
+        transaction.update(productRef, {
+          stock: nextProductStock,
+          updatedAt: now,
+          updatedAtServer: serverTimestamp(),
+        });
+
         const itemRef = doc(saleItemsCollection);
 
         const itemPayload: Omit<SaleItem, "id"> & {
