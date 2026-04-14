@@ -17,8 +17,9 @@ type PosAction =
   | { type: "decrement"; payload: string }
   | { type: "set-quantity"; payload: { productId: string; quantity: number } }
   | { type: "set-note"; payload: { productId: string; note: string } }
-  | { type: "set-quantity"; payload: { productId: string; quantity: number } }
-  | { type: "set-note"; payload: { productId: string; note: string } }
+  | { type: "set-discount"; payload: number }
+  | { type: "set-tax-percent"; payload: number }
+  | { type: "set-payment-method"; payload: "cash" | "card" | "transfer" | "mixed" }
   | { type: "remove"; payload: string }
   | { type: "clear-cart" };
 
@@ -28,7 +29,9 @@ const initialState: PosState = {
   selectedCustomerId: "none",
   cart: [],
   lastChangedProductId: null,
-  lastChangedProductId: null,
+  manualDiscount: 0,
+  taxPercent: 0,
+  paymentMethod: "cash",
 };
 
 function reducer(state: PosState, action: PosAction): PosState {
@@ -71,7 +74,6 @@ function reducer(state: PosState, action: PosAction): PosState {
             : line,
         ),
         lastChangedProductId: action.payload,
-        lastChangedProductId: action.payload,
       };
     case "decrement":
       return {
@@ -105,6 +107,21 @@ function reducer(state: PosState, action: PosAction): PosState {
           line.product.id === action.payload.productId ? { ...line, note: action.payload.note } : line,
         ),
       };
+    case "set-discount":
+      return {
+        ...state,
+        manualDiscount: Number.isFinite(action.payload) ? Math.max(0, action.payload) : state.manualDiscount,
+      };
+    case "set-tax-percent":
+      return {
+        ...state,
+        taxPercent: Number.isFinite(action.payload) ? Math.max(0, action.payload) : state.taxPercent,
+      };
+    case "set-payment-method":
+      return {
+        ...state,
+        paymentMethod: action.payload,
+      };
     case "remove":
       return {
         ...state,
@@ -126,9 +143,14 @@ type PosContextShape = {
   filteredProducts: PosProduct[];
   selectedCustomer: PosCustomer | null;
   subtotal: number;
+  discountedSubtotal: number;
+  taxAmount: number;
+  finalTotal: number;
   itemCount: number;
   isLoadingProducts: boolean;
   isLoadingCustomers: boolean;
+  hasValidationErrors: boolean;
+  validationMessages: string[];
   dispatch: React.Dispatch<PosAction>;
 };
 
@@ -249,7 +271,22 @@ export function PosProvider({ children }: { children: ReactNode }) {
         : customers.find((customer) => customer.id === state.selectedCustomerId) ?? null;
 
     const subtotal = state.cart.reduce((sum, line) => sum + line.product.price * line.quantity, 0);
+    const safeDiscount = Math.min(state.manualDiscount, subtotal);
+    const discountedSubtotal = Math.max(0, subtotal - safeDiscount);
+    const taxAmount = discountedSubtotal * (state.taxPercent / 100);
+    const finalTotal = discountedSubtotal + taxAmount;
     const itemCount = state.cart.reduce((sum, line) => sum + line.quantity, 0);
+    const validationMessages: string[] = [];
+
+    if (!state.cart.length) {
+      validationMessages.push("Agrega al menos un producto para continuar.");
+    }
+    if (state.manualDiscount > subtotal) {
+      validationMessages.push("El descuento no puede ser mayor al subtotal.");
+    }
+    if (state.taxPercent > 100) {
+      validationMessages.push("El impuesto configurado parece inválido (>100%).");
+    }
 
     return {
       state,
@@ -259,9 +296,14 @@ export function PosProvider({ children }: { children: ReactNode }) {
       filteredProducts,
       selectedCustomer,
       subtotal,
+      discountedSubtotal,
+      taxAmount,
+      finalTotal,
       itemCount,
       isLoadingProducts,
       isLoadingCustomers,
+      hasValidationErrors: validationMessages.length > 0,
+      validationMessages,
       dispatch,
     };
   }, [customers, isLoadingCustomers, isLoadingProducts, products, state]);

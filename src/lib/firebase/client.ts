@@ -30,5 +30,9 @@ if (hasFirebaseEnv()) {
 
 export const firebaseApp = app;
 export const auth = app ? getAuth(app) : null;
+<<<<<<< codex/build-phase-1-for-pharmaco-system-ia3w72
+export const db = app ? getFirestore(app) : null;
+=======
 export const db = app ? getFirestore(app, "pharma-utils") : null;
+>>>>>>> master
 export const isFirebaseConfigured = hasFirebaseEnv();

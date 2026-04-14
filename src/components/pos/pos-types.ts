@@ -29,4 +29,7 @@ export type PosState = {
   selectedCustomerId: string | "none";
   cart: PosCartItem[];
   lastChangedProductId: string | null;
+  manualDiscount: number;
+  taxPercent: number;
+  paymentMethod: "cash" | "card" | "transfer" | "mixed";
 };

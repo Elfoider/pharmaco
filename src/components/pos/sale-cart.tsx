@@ -7,7 +7,6 @@ import { usePos } from "@/components/pos/pos-provider";
 
 export function SaleCart() {
   const { state, dispatch, subtotal } = usePos();
-  const { state, dispatch, subtotal } = usePos();
 
   return (
     <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-3">
@@ -55,7 +54,6 @@ export function SaleCart() {
                     type="button"
                     className="h-7 w-7 px-0"
                     onClick={() => dispatch({ type: "increment", payload: line.product.id })}
-                    disabled={line.quantity >= line.product.stock}
                     disabled={line.quantity >= line.product.stock}
                   >
                     <Plus className="h-3 w-3" />
