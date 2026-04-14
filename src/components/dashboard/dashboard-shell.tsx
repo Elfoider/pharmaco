@@ -17,6 +17,7 @@ import { StatusChip } from "@/components/ui/status-chip";
 import type { UserRole } from "@/lib/auth/roles";
 import { SummaryCard } from "@/components/dashboard/summary-card";
 import { ModuleCard } from "@/components/dashboard/module-card";
+import { AnalyticsPanel } from "@/components/dashboard/analytics-panel";
 
 const moduleCatalog = [
   {
@@ -93,6 +94,8 @@ export function DashboardShell({ role }: { role: UserRole }) {
               <SummaryCard label="Stock crítico" value="17" delta="-2.1% esta semana" />
               <SummaryCard label="Tareas activas" value="31" delta="+12% hoy" />
             </div>
+
+            <AnalyticsPanel />
 
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {moduleCatalog.map((module) => (

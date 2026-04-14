@@ -21,6 +21,8 @@ export const COLLECTIONS = {
   inventoryMovements: "inventory_movements",
   sales: "sales",
   saleItems: "sale_items",
+  saleReturns: "sale_returns",
+  saleReturnItems: "sale_return_items",
 } as const;
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];

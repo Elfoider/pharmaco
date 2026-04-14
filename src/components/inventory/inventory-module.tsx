@@ -7,14 +7,18 @@ import { EmptyState } from "@/components/data/empty-state";
 import { ModuleHeader } from "@/components/data/module-header";
 import { ModuleStat } from "@/components/data/module-stat";
 import { InventoryExpiryAlerts } from "@/components/inventory/inventory-expiry-alerts";
+import { InventoryDepletionCard } from "@/components/inventory/inventory-depletion-card";
 import { InventoryMovementsTable } from "@/components/inventory/inventory-movements-table";
 import { InventoryProductView } from "@/components/inventory/inventory-product-view";
 import { Button } from "@/components/ui/button";
 import { GlassPanel } from "@/components/ui/glass-panel";
+import { estimateInventoryStockout, type InventoryForecast } from "@/lib/analytics/inventory-forecast";
 import { productsService } from "@/lib/services/products.service";
 import { inventoryService } from "@/lib/services/inventory.service";
+import { saleItemsService } from "@/lib/services/sales.service";
 import { inventoryAdjustmentSchema, inventoryEntrySchema } from "@/lib/validations/inventory";
 import type { Product } from "@/modules/products/types";
+import type { SaleItem } from "@/modules/sales/types";
 import type { AdjustmentInput, Batch, EntryInput, InventoryMovement } from "@/modules/inventory/types";
 
 const mockProducts: Product[] = [
@@ -69,6 +73,8 @@ export function InventoryModule() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [movements, setMovements] = useState<InventoryMovement[]>([]);
   const [expiring, setExpiring] = useState<Batch[]>([]);
+  const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
+  const [forecast, setForecast] = useState<InventoryForecast | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [feedback, setFeedback] = useState<{ kind: "success" | "error"; message: string } | null>(null);
 
@@ -91,22 +97,25 @@ export function InventoryModule() {
   async function loadData(productId = "all") {
     setIsLoading(true);
     try {
-      const [remoteProducts, remoteMovements, remoteBatches, expiringBatches] = await Promise.all([
+      const [remoteProducts, remoteMovements, remoteBatches, expiringBatches, remoteSaleItems] = await Promise.all([
         productsService.getAll(),
         inventoryService.getMovementHistory(productId),
         inventoryService.getBatchesByProduct(productId),
         inventoryService.getExpiringBatches(45),
+        saleItemsService.getAll(2000),
       ]);
 
       setProducts(remoteProducts.length ? remoteProducts : mockProducts);
       setMovements(remoteMovements.length ? remoteMovements : mockMovements);
       setBatches(remoteBatches.length ? remoteBatches : mockBatches);
       setExpiring(expiringBatches.length ? expiringBatches : mockBatches);
+      setSaleItems(remoteSaleItems);
     } catch {
       setProducts(mockProducts);
       setMovements(mockMovements);
       setBatches(mockBatches);
       setExpiring(mockBatches);
+      setSaleItems([]);
       setFeedback({ kind: "error", message: "No fue posible sincronizar inventario desde Firestore." });
     } finally {
       setIsLoading(false);
@@ -120,6 +129,20 @@ export function InventoryModule() {
   useEffect(() => {
     void loadData(selectedProductId);
   }, [selectedProductId]);
+
+  useEffect(() => {
+    if (selectedProductId === "all") {
+      setForecast(null);
+      return;
+    }
+
+    const currentStock = batches.reduce((sum, batch) => sum + batch.stock, 0);
+    const samples = saleItems
+      .filter((item) => item.productId === selectedProductId)
+      .map((item) => ({ date: item.createdAt, quantity: item.quantity }));
+
+    setForecast(estimateInventoryStockout(currentStock, samples, 42));
+  }, [batches, saleItems, selectedProductId]);
 
   const totalStock = useMemo(() => batches.reduce((sum, batch) => sum + batch.stock, 0), [batches]);
   const criticalStock = useMemo(() => batches.filter((batch) => batch.stock <= 10).length, [batches]);
@@ -205,6 +228,10 @@ export function InventoryModule() {
         ) : null}
 
         <InventoryExpiryAlerts batches={expiring} />
+        <InventoryDepletionCard
+          forecast={forecast}
+          productName={products.find((product) => product.id === selectedProductId)?.name}
+        />
 
         <div className="grid gap-4 lg:grid-cols-2">
           <GlassPanel className="space-y-3">

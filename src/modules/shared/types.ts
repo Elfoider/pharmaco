@@ -84,20 +84,60 @@ export type Sale = BaseEntity & {
   saleNumber: string;
   clientId?: string;
   cashierUserId: string;
+  saleItemIds?: string[];
+  itemTypesCount?: number;
+  itemsQuantityTotal?: number;
   subtotal: number;
   discountTotal: number;
   taxTotal: number;
   total: number;
   paymentMethod: "cash" | "card" | "transfer" | "mixed";
+  returnStatus?: "none" | "partial" | "full";
+  returnedItemsQuantity?: number;
+  returnedAmountTotal?: number;
+  lastReturnAt?: string;
   notes?: string;
 };
 
 export type SaleItem = BaseEntity & {
   saleId: string;
+  saleNumber?: string;
   productId: string;
   batchId?: string;
   quantity: number;
+  originalQuantity?: number;
+  returnedQuantity?: number;
+  returnStatus?: "none" | "partial" | "full";
   unitPrice: number;
   discount: number;
   lineTotal: number;
+};
+
+export type SaleReturn = BaseEntity & {
+  saleId: string;
+  saleNumber: string;
+  saleItemIds: string[];
+  returnNumber: string;
+  reason: string;
+  refundMethod: "cash" | "card" | "transfer" | "store_credit" | "mixed";
+  refundAmount: number;
+  status: "requested" | "approved" | "processed" | "cancelled";
+  inventoryRestocked: boolean;
+  processedByUserId: string;
+  processedAt?: string;
+  notes?: string;
+};
+
+export type SaleReturnItem = BaseEntity & {
+  saleReturnId: string;
+  saleId: string;
+  saleItemId: string;
+  productId: string;
+  sourceBatchId?: string;
+  restockBatchId?: string;
+  quantity: number;
+  unitPrice: number;
+  lineRefund: number;
+  restockStatus: "pending" | "restocked" | "skipped";
+  inventoryMovementId?: string;
 };

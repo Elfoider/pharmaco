@@ -1,29 +1,27 @@
-import {
-  collection,
-  doc,
-  getDocs,
-  orderBy,
-  query,
-  runTransaction,
-  serverTimestamp,
-  where,
-} from "firebase/firestore";
+import { collection, doc, getDocs, orderBy, query, runTransaction, serverTimestamp, where } from "firebase/firestore";
 
-import { db } from "@/lib/firebase/client";
-import type { Sale, SaleItem } from "@/modules/sales/types";
+import { auth, db } from "@/lib/firebase/client";
+import type { Sale, SaleItem, SaleReturn, SaleReturnItem } from "@/modules/sales/types";
 import { COLLECTIONS, createCrudService } from "@/lib/services/_firestore";
 
-export type CloseSaleItemInput = {
+export type PosFinalizeItemInput = {
   productId: string;
-  quantity: number;
+  productName: string;
+  qty: number;
   unitPrice: number;
+  subtotal: number;
+  preferredBatchId?: string;
 };
 
-export type CloseSaleInput = {
-  clientId?: string;
+export type PosFinalizeSaleInput = {
+  clientId: string | null;
+  subtotal: number;
+  discount: number;
+  tax: number;
+  total: number;
   paymentMethod: Sale["paymentMethod"];
-  items: CloseSaleItemInput[];
-  cashierUserId?: string;
+  items: PosFinalizeItemInput[];
+  cashierId?: string;
 };
 
 function assertDb() {
@@ -44,71 +42,71 @@ function createSaleNumber() {
 export const salesService = {
   ...createCrudService<Sale>(COLLECTIONS.sales),
 
-  async closeSale(input: CloseSaleInput) {
+  async finalizePosSale(input: PosFinalizeSaleInput) {
     if (!input.items.length) {
       throw new Error("No hay productos en el carrito");
     }
 
-    const invalidItem = input.items.find((item) => item.quantity <= 0 || item.unitPrice < 0);
+    const invalidItem = input.items.find((item) => item.qty <= 0 || item.unitPrice < 0 || item.subtotal < 0);
     if (invalidItem) {
-      throw new Error("Hay líneas inválidas en la venta");
+      throw new Error("Hay ítems inválidos en la venta");
     }
 
     const firestore = assertDb();
     const now = new Date().toISOString();
     const saleNumber = createSaleNumber();
     const batchesCollection = collection(firestore, COLLECTIONS.batches);
+    const productsCollection = collection(firestore, COLLECTIONS.products);
+    const movementsCollection = collection(firestore, COLLECTIONS.inventoryMovements);
     const productIds = [...new Set(input.items.map((item) => item.productId))];
     const batchOrderByProduct = new Map<string, string[]>();
 
     for (const productId of productIds) {
-      const batchSnap = await getDocs(
+      const batchesSnap = await getDocs(
         query(
           batchesCollection,
           where("productId", "==", productId),
           orderBy("expiryDate", "asc"),
         ),
       );
-      batchOrderByProduct.set(
-        productId,
-        batchSnap.docs.map((batchDoc) => batchDoc.id),
-      );
+
+      batchOrderByProduct.set(productId, batchesSnap.docs.map((item) => item.id));
     }
 
     return runTransaction(firestore, async (transaction) => {
       const salesCollection = collection(firestore, COLLECTIONS.sales);
       const saleItemsCollection = collection(firestore, COLLECTIONS.saleItems);
-      const inventoryMovementsCollection = collection(firestore, COLLECTIONS.inventoryMovements);
-      const productsCollection = collection(firestore, COLLECTIONS.products);
-
       const saleRef = doc(salesCollection);
-      const subtotal = input.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
 
-      const salePayload: Omit<Sale, "id"> = {
+      const salePayload = {
         status: "active",
+        saleNumber,
+        cashierUserId: input.cashierId ?? auth?.currentUser?.uid ?? "cashier-local",
+        clientId: input.clientId,
+        saleItemIds: [] as string[],
+        itemTypesCount: input.items.length,
+        itemsQuantityTotal: input.items.reduce((sum, item) => sum + item.qty, 0),
+        subtotal: input.subtotal,
+        discountTotal: input.discount,
+        taxTotal: input.tax,
+        total: input.total,
+        paymentMethod: input.paymentMethod,
+        returnStatus: "none" as const,
+        returnedItemsQuantity: 0,
+        returnedAmountTotal: 0,
         createdAt: now,
         updatedAt: now,
-        saleNumber,
-        clientId: input.clientId,
-        cashierUserId: input.cashierUserId ?? "cashier-local",
-        subtotal,
-        discountTotal: 0,
-        taxTotal: 0,
-        total: subtotal,
-        paymentMethod: input.paymentMethod,
-      };
-
-      transaction.set(saleRef, {
-        ...salePayload,
         createdAtServer: serverTimestamp(),
         updatedAtServer: serverTimestamp(),
-      });
+      };
+
+      transaction.set(saleRef, salePayload);
+
+      const saleItemIds: string[] = [];
 
       for (const item of input.items) {
-        const lineTotal = item.quantity * item.unitPrice;
-
         const batchIds = batchOrderByProduct.get(item.productId) ?? [];
-        const batchDocs: Array<{ id: string; data: Record<string, unknown> }> = [];
+        const availableBatches: Array<{ id: string; stock: number }> = [];
 
         for (const batchId of batchIds) {
           const batchRef = doc(batchesCollection, batchId);
@@ -116,58 +114,59 @@ export const salesService = {
           if (!batchSnap.exists()) {
             continue;
           }
-          batchDocs.push({ id: batchSnap.id, data: batchSnap.data() });
-        }
 
-        const totalAvailable = batchDocs.reduce((sum, batchDoc) => {
-          const batchStock = Number(batchDoc.data.stock ?? 0);
-          return sum + (Number.isFinite(batchStock) ? batchStock : 0);
-        }, 0);
-
-        if (totalAvailable < item.quantity) {
-          throw new Error(`Stock insuficiente para producto ${item.productId}`);
-        }
-
-        let remainingToDiscount = item.quantity;
-        for (const batchDoc of batchDocs) {
-          if (remainingToDiscount <= 0) {
-            break;
-          }
-
-          const currentStock = Number(batchDoc.data.stock ?? 0);
-          if (!Number.isFinite(currentStock) || currentStock <= 0) {
+          const stock = Number(batchSnap.data().stock ?? 0);
+          if (!Number.isFinite(stock) || stock <= 0) {
             continue;
           }
 
-          const discount = Math.min(currentStock, remainingToDiscount);
-          const nextStock = currentStock - discount;
+          availableBatches.push({ id: batchId, stock });
+        }
 
-          if (nextStock < 0) {
-            throw new Error(`Stock negativo detectado en lote ${batchDoc.id}`);
+        const selectedBatches = item.preferredBatchId
+          ? availableBatches.filter((batch) => batch.id === item.preferredBatchId)
+          : availableBatches;
+
+        const availableStock = selectedBatches.reduce((sum, batch) => sum + batch.stock, 0);
+        if (availableStock < item.qty) {
+          throw new Error(`Stock insuficiente para ${item.productName}`);
+        }
+
+        let pendingDiscount = item.qty;
+        for (const batch of selectedBatches) {
+          if (pendingDiscount <= 0) {
+            break;
           }
 
-          transaction.update(doc(batchesCollection, batchDoc.id), {
-            stock: nextStock,
+          const discountQty = Math.min(batch.stock, pendingDiscount);
+          const nextBatchStock = batch.stock - discountQty;
+          if (nextBatchStock < 0) {
+            throw new Error(`Stock negativo detectado en lote ${batch.id}`);
+          }
+
+          transaction.update(doc(batchesCollection, batch.id), {
+            stock: nextBatchStock,
             updatedAt: now,
             updatedAtServer: serverTimestamp(),
           });
 
-          const movementRef = doc(inventoryMovementsCollection);
+          const movementRef = doc(movementsCollection);
           transaction.set(movementRef, {
-            type: "salida",
             productId: item.productId,
-            batchId: batchDoc.id,
-            quantity: discount,
-            reason: `Venta ${saleNumber}`,
+            batchId: batch.id,
+            quantity: discountQty,
+            type: "salida",
+            reason: "venta POS",
+            referenceSaleId: saleRef.id,
             createdAt: now,
             createdAtServer: serverTimestamp(),
           });
 
-          remainingToDiscount -= discount;
+          pendingDiscount -= discountQty;
         }
 
-        if (remainingToDiscount > 0) {
-          throw new Error(`No fue posible completar FIFO para ${item.productId}`);
+        if (pendingDiscount > 0) {
+          throw new Error(`No fue posible aplicar FIFO para ${item.productName}`);
         }
 
         const productRef = doc(productsCollection, item.productId);
@@ -176,9 +175,9 @@ export const salesService = {
           throw new Error(`Producto no existe: ${item.productId}`);
         }
         const currentProductStock = Number(productSnap.data().stock ?? 0);
-        const nextProductStock = currentProductStock - item.quantity;
+        const nextProductStock = currentProductStock - item.qty;
         if (!Number.isFinite(nextProductStock) || nextProductStock < 0) {
-          throw new Error(`Stock insuficiente de producto ${item.productId}`);
+          throw new Error(`Stock insuficiente para ${item.productName}`);
         }
         transaction.update(productRef, {
           stock: nextProductStock,
@@ -187,16 +186,29 @@ export const salesService = {
         });
 
         const itemRef = doc(saleItemsCollection);
-        const itemPayload: Omit<SaleItem, "id"> = {
+        saleItemIds.push(itemRef.id);
+
+        const itemPayload: Omit<SaleItem, "id"> & {
+          productName: string;
+          qty: number;
+          subtotal: number;
+        } = {
           status: "active",
+          saleId: saleRef.id,
+          saleNumber,
+          productId: item.productId,
+          quantity: item.qty,
+          originalQuantity: item.qty,
+          returnedQuantity: 0,
+          returnStatus: "none",
+          qty: item.qty,
+          unitPrice: item.unitPrice,
+          subtotal: item.subtotal,
+          discount: 0,
+          lineTotal: item.subtotal,
+          productName: item.productName,
           createdAt: now,
           updatedAt: now,
-          saleId: saleRef.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          discount: 0,
-          lineTotal,
         };
 
         transaction.set(itemRef, {
@@ -206,14 +218,20 @@ export const salesService = {
         });
       }
 
+      transaction.update(saleRef, {
+        saleItemIds,
+        updatedAt: now,
+        updatedAtServer: serverTimestamp(),
+      });
+
       return {
         saleId: saleRef.id,
         saleNumber,
-        total: subtotal,
-        itemsCount: input.items.length,
       };
     });
   },
 };
 
 export const saleItemsService = createCrudService<SaleItem>(COLLECTIONS.saleItems);
+export const saleReturnsService = createCrudService<SaleReturn>(COLLECTIONS.saleReturns);
+export const saleReturnItemsService = createCrudService<SaleReturnItem>(COLLECTIONS.saleReturnItems);
