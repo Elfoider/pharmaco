@@ -204,12 +204,10 @@ Todos exponen base CRUD escalable: `create`, `getById`, `getAll`, `update`, `del
 ### POS module (phase 1 base)
 
 - Ruta: `/dashboard/pos`
-- Buscador rápido de productos con resultados instantáneos
+- Layout profesional de 3 paneles (búsqueda, carrito, resumen)
+- Buscador rápido y lista de resultados optimizada para caja
 - Carrito local (agregar, incrementar/disminuir, eliminar, subtotal)
 - Selector de cliente existente con opción **Sin cliente**
-- Cierre de venta con botón **Finalizar venta**
-- Persistencia en Firestore en colecciones `sales` y `sale_items` usando transacción
-- Integración con inventario al cierre: descuento FIFO por lote (primero en vencer)
-- Creación automática de movimiento de inventario tipo `salida`
-- Validaciones de stock y bloqueo preventivo para evitar stock negativo
-- Loading y confirmación visual al cerrar venta + reset de carrito
+- Estado modular con `PosProvider` + reducer para escalar a lotes/devoluciones/IA
+- Cierre real de venta deshabilitado en esta fase (botón de próxima fase)
+- Sin afectación de inventario en esta fase
