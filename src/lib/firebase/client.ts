@@ -31,5 +31,5 @@ if (hasFirebaseEnv()) {
 
 export const firebaseApp = app;
 export const auth = app ? getAuth(app) : null;
-export const db = app ? getFirestore(app) : null;
+export const db = app ? getFirestore(app, "pharma-utils") : null;
 export const isFirebaseConfigured = hasFirebaseEnv();
