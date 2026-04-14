@@ -1,10 +1,11 @@
 "use client";
 
 import { LineChart, TrendingDown, TrendingUp } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { toDashboardChartSeries } from "@/lib/analytics/charts";
-import { linearRegression, predictNextValue, summarizeTrend } from "@/lib/analytics/math";
-import type { AnalyticsPredictionReport, TimeSeries } from "@/modules/analytics/types";
+import { analyticsService } from "@/lib/services/analytics.service";
+import type { AnalyticsPredictionReport } from "@/modules/analytics/types";
 
 function colorClass(token: "cyan" | "blue" | "mint") {
   return {
@@ -12,37 +13,6 @@ function colorClass(token: "cyan" | "blue" | "mint") {
     blue: "text-blue-200",
     mint: "text-emerald-200",
   }[token];
-}
-
-function buildMockSeries(): TimeSeries {
-  return {
-    metric: "sales_amount",
-    granularity: "day",
-    points: [
-      { timestamp: "2026-04-08", value: 4200, label: "08 Abr" },
-      { timestamp: "2026-04-09", value: 4380, label: "09 Abr" },
-      { timestamp: "2026-04-10", value: 4510, label: "10 Abr" },
-      { timestamp: "2026-04-11", value: 4600, label: "11 Abr" },
-      { timestamp: "2026-04-12", value: 4890, label: "12 Abr" },
-      { timestamp: "2026-04-13", value: 5010, label: "13 Abr" },
-      { timestamp: "2026-04-14", value: 5230, label: "14 Abr" },
-    ],
-  };
-}
-
-function buildMockReport(): AnalyticsPredictionReport {
-  const series = buildMockSeries();
-  const points = series.points.map((point, index) => ({ x: index, y: point.value }));
-  const regression = linearRegression(points);
-  const nextValue = predictNextValue(series, regression);
-  const trend = summarizeTrend(series, nextValue);
-
-  return {
-    series,
-    regression,
-    nextValue,
-    trend,
-  };
 }
 
 function Sparkline({ values }: { values: number[] }) {
@@ -67,7 +37,41 @@ function Sparkline({ values }: { values: number[] }) {
 }
 
 export function AnalyticsPanel({ report }: { report?: AnalyticsPredictionReport | null }) {
-  const activeReport = report ?? buildMockReport();
+  const [serviceReport, setServiceReport] = useState<AnalyticsPredictionReport | null>(null);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    if (report) return;
+    let active = true;
+
+    void analyticsService
+      .getSalesPredictionReport()
+      .then((result) => {
+        if (active) {
+          setServiceReport(result);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setHasError(true);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [report]);
+
+  const activeReport = report ?? serviceReport;
+
+  if (!activeReport) {
+    return (
+      <section className="rounded-2xl border border-cyan-300/20 bg-slate-950/50 p-4 text-sm text-slate-300">
+        {hasError ? "No fue posible cargar la analítica mock." : "Cargando analítica predictiva..."}
+      </section>
+    );
+  }
+
   const chartSeries = toDashboardChartSeries(activeReport.series);
   const metricValues = chartSeries.points.map((point) => point.y);
   const isUp = activeReport.trend.direction !== "down";
