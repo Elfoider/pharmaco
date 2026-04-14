@@ -3,12 +3,13 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyDad78dDrCfmd-1kBPes9Gkwgr9gfjgXvI",
+  authDomain: "smart-savings-4be47.firebaseapp.com",
+  projectId: "smart-savings-4be47",
+  storageBucket: "smart-savings-4be47.firebasestorage.app",
+  messagingSenderId: "538090496490",
+  appId: "1:538090496490:web:76d5a2601bb90228d05293",
+  measurementId: "G-JPF7P320RN"
 };
 
 function hasFirebaseEnv() {
@@ -30,5 +31,5 @@ if (hasFirebaseEnv()) {
 
 export const firebaseApp = app;
 export const auth = app ? getAuth(app) : null;
-export const db = app ? getFirestore(app) : null;
+export const db = app ? getFirestore(app, "pharma-utils") : null;
 export const isFirebaseConfigured = hasFirebaseEnv();
