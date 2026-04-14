@@ -17,6 +17,8 @@ type PosAction =
   | { type: "decrement"; payload: string }
   | { type: "set-quantity"; payload: { productId: string; quantity: number } }
   | { type: "set-note"; payload: { productId: string; note: string } }
+  | { type: "set-quantity"; payload: { productId: string; quantity: number } }
+  | { type: "set-note"; payload: { productId: string; note: string } }
   | { type: "remove"; payload: string }
   | { type: "clear-cart" };
 
@@ -25,6 +27,7 @@ const initialState: PosState = {
   customerSearch: "",
   selectedCustomerId: "none",
   cart: [],
+  lastChangedProductId: null,
   lastChangedProductId: null,
 };
 
@@ -67,6 +70,7 @@ function reducer(state: PosState, action: PosAction): PosState {
             ? { ...line, quantity: Math.min(line.quantity + 1, line.product.stock, 999) }
             : line,
         ),
+        lastChangedProductId: action.payload,
         lastChangedProductId: action.payload,
       };
     case "decrement":
