@@ -21,6 +21,16 @@ export type PosCartItem = {
   product: PosProduct;
   quantity: number;
   note?: string;
+  batchMode: "auto" | "manual";
+  selectedBatchId?: string;
+};
+
+export type PosBatch = {
+  id: string;
+  productId: string;
+  lotNumber: string;
+  expiryDate: string;
+  stock: number;
 };
 
 export type PosState = {

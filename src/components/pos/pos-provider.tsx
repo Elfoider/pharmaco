@@ -4,8 +4,9 @@ import { createContext, useCallback, useContext, useMemo, useReducer, type React
 import { useEffect, useState } from "react";
 
 import { POS_MOCK_CUSTOMERS, POS_MOCK_PRODUCTS } from "@/components/pos/pos-mocks";
-import type { PosCartItem, PosCustomer, PosProduct, PosState } from "@/components/pos/pos-types";
+import type { PosBatch, PosCartItem, PosCustomer, PosProduct, PosState } from "@/components/pos/pos-types";
 import { clientsService } from "@/lib/services/clients.service";
+import { inventoryService } from "@/lib/services/inventory.service";
 import { productsService } from "@/lib/services/products.service";
 import { salesService } from "@/lib/services/sales.service";
 
@@ -18,6 +19,8 @@ type PosAction =
   | { type: "decrement"; payload: string }
   | { type: "set-quantity"; payload: { productId: string; quantity: number } }
   | { type: "set-note"; payload: { productId: string; note: string } }
+  | { type: "set-batch-mode"; payload: { productId: string; mode: "auto" | "manual" } }
+  | { type: "set-batch-id"; payload: { productId: string; batchId: string } }
   | { type: "set-discount"; payload: number }
   | { type: "set-tax-percent"; payload: number }
   | { type: "set-payment-method"; payload: "cash" | "card" | "transfer" | "mixed" }
@@ -51,7 +54,7 @@ function reducer(state: PosState, action: PosAction): PosState {
       if (!found) {
         return {
           ...state,
-          cart: [{ product: action.payload, quantity: 1 }, ...state.cart],
+          cart: [{ product: action.payload, quantity: 1, batchMode: "auto" }, ...state.cart],
           lastChangedProductId: action.payload.id,
         };
       }
@@ -108,6 +111,22 @@ function reducer(state: PosState, action: PosAction): PosState {
           line.product.id === action.payload.productId ? { ...line, note: action.payload.note } : line,
         ),
       };
+    case "set-batch-mode":
+      return {
+        ...state,
+        cart: state.cart.map((line) =>
+          line.product.id === action.payload.productId
+            ? { ...line, batchMode: action.payload.mode, selectedBatchId: action.payload.mode === "auto" ? undefined : line.selectedBatchId }
+            : line,
+        ),
+      };
+    case "set-batch-id":
+      return {
+        ...state,
+        cart: state.cart.map((line) =>
+          line.product.id === action.payload.productId ? { ...line, selectedBatchId: action.payload.batchId } : line,
+        ),
+      };
     case "set-discount":
       return {
         ...state,
@@ -139,6 +158,7 @@ function reducer(state: PosState, action: PosAction): PosState {
 type PosContextShape = {
   state: PosState;
   products: PosProduct[];
+  batches: PosBatch[];
   customers: PosCustomer[];
   filteredCustomers: PosCustomer[];
   filteredProducts: PosProduct[];
@@ -149,6 +169,7 @@ type PosContextShape = {
   finalTotal: number;
   itemCount: number;
   isLoadingProducts: boolean;
+  isLoadingBatches: boolean;
   isLoadingCustomers: boolean;
   hasValidationErrors: boolean;
   validationMessages: string[];
@@ -168,8 +189,10 @@ function normalize(value: string) {
 export function PosProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [products, setProducts] = useState<PosProduct[]>(POS_MOCK_PRODUCTS);
+  const [batches, setBatches] = useState<PosBatch[]>([]);
   const [customers, setCustomers] = useState<PosCustomer[]>(POS_MOCK_CUSTOMERS);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [isLoadingBatches, setIsLoadingBatches] = useState(true);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
   const [isClosingSale, setIsClosingSale] = useState(false);
   const [closeSaleError, setCloseSaleError] = useState<string | null>(null);
@@ -209,6 +232,41 @@ export function PosProvider({ children }: { children: ReactNode }) {
     }
 
     void loadProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadBatches() {
+      setIsLoadingBatches(true);
+      try {
+        const remoteBatches = await inventoryService.getBatchesByProduct("all");
+        if (!isMounted) return;
+
+        const mapped = remoteBatches.map((batch) => ({
+          id: batch.id,
+          productId: batch.productId,
+          lotNumber: batch.lotNumber,
+          expiryDate: batch.expiryDate,
+          stock: batch.stock,
+        }));
+
+        setBatches(mapped);
+      } catch {
+        if (!isMounted) return;
+        setBatches([]);
+      } finally {
+        if (isMounted) {
+          setIsLoadingBatches(false);
+        }
+      }
+    }
+
+    void loadBatches();
 
     return () => {
       isMounted = false;
@@ -279,6 +337,7 @@ export function PosProvider({ children }: { children: ReactNode }) {
           qty: line.quantity,
           unitPrice: line.product.price,
           subtotal: line.product.price * line.quantity,
+          preferredBatchId: line.batchMode === "manual" ? line.selectedBatchId : undefined,
         })),
       });
 
@@ -342,10 +401,48 @@ export function PosProvider({ children }: { children: ReactNode }) {
     if (state.cart.some((line) => line.quantity > line.product.stock)) {
       validationMessages.push("Hay productos con cantidad mayor al stock disponible.");
     }
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (const line of state.cart) {
+      const productBatches = batches.filter((batch) => batch.productId === line.product.id);
+      const availableBatches = productBatches.filter((batch) => {
+        const expiry = new Date(batch.expiryDate);
+        expiry.setHours(0, 0, 0, 0);
+        return batch.stock > 0 && expiry >= today;
+      });
+
+      if (line.batchMode === "manual") {
+        if (!line.selectedBatchId) {
+          validationMessages.push(`Selecciona lote manual para ${line.product.name}.`);
+          continue;
+        }
+
+        const selectedBatch = productBatches.find((batch) => batch.id === line.selectedBatchId);
+        if (!selectedBatch) {
+          validationMessages.push(`Lote manual no válido para ${line.product.name}.`);
+          continue;
+        }
+        const expiry = new Date(selectedBatch.expiryDate);
+        expiry.setHours(0, 0, 0, 0);
+        if (expiry < today) {
+          validationMessages.push(`El lote seleccionado de ${line.product.name} está vencido.`);
+        }
+        if (selectedBatch.stock < line.quantity) {
+          validationMessages.push(`Stock insuficiente en lote manual para ${line.product.name}.`);
+        }
+      } else {
+        const autoStock = availableBatches.reduce((sum, batch) => sum + batch.stock, 0);
+        if (autoStock < line.quantity) {
+          validationMessages.push(`Stock disponible insuficiente por lotes para ${line.product.name}.`);
+        }
+      }
+    }
 
     return {
       state,
       products,
+      batches,
       customers,
       filteredCustomers,
       filteredProducts,
@@ -356,6 +453,7 @@ export function PosProvider({ children }: { children: ReactNode }) {
       finalTotal,
       itemCount,
       isLoadingProducts,
+      isLoadingBatches,
       isLoadingCustomers,
       hasValidationErrors: validationMessages.length > 0,
       validationMessages,
@@ -365,7 +463,7 @@ export function PosProvider({ children }: { children: ReactNode }) {
       finalizeSale,
       dispatch,
     };
-  }, [closeSaleError, closeSaleSuccess, customers, finalizeSale, isClosingSale, isLoadingCustomers, isLoadingProducts, products, state]);
+  }, [batches, closeSaleError, closeSaleSuccess, customers, finalizeSale, isClosingSale, isLoadingBatches, isLoadingCustomers, isLoadingProducts, products, state]);
 
   return <PosContext.Provider value={value}>{children}</PosContext.Provider>;
 }

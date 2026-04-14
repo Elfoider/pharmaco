@@ -10,6 +10,7 @@ export type PosFinalizeItemInput = {
   qty: number;
   unitPrice: number;
   subtotal: number;
+  preferredBatchId?: string;
 };
 
 export type PosFinalizeSaleInput = {
@@ -114,13 +115,17 @@ export const salesService = {
           availableBatches.push({ id: batchId, stock });
         }
 
-        const availableStock = availableBatches.reduce((sum, batch) => sum + batch.stock, 0);
+        const selectedBatches = item.preferredBatchId
+          ? availableBatches.filter((batch) => batch.id === item.preferredBatchId)
+          : availableBatches;
+
+        const availableStock = selectedBatches.reduce((sum, batch) => sum + batch.stock, 0);
         if (availableStock < item.qty) {
           throw new Error(`Stock insuficiente para ${item.productName}`);
         }
 
         let pendingDiscount = item.qty;
-        for (const batch of availableBatches) {
+        for (const batch of selectedBatches) {
           if (pendingDiscount <= 0) {
             break;
           }
