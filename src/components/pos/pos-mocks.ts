@@ -41,10 +41,12 @@ export const POS_MOCK_CUSTOMERS: PosCustomer[] = [
     id: "cl-1",
     name: "María Pérez",
     document: "V-12345678",
+    phone: "+58 412 111 2222",
   },
   {
     id: "cl-2",
     name: "Carlos Gómez",
     document: "V-87654321",
+    phone: "+58 424 333 4444",
   },
 ];

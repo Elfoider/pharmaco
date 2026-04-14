@@ -5,30 +5,30 @@ import { useEffect, useState } from "react";
 
 import { POS_MOCK_CUSTOMERS, POS_MOCK_PRODUCTS } from "@/components/pos/pos-mocks";
 import type { PosCartItem, PosCustomer, PosProduct, PosState } from "@/components/pos/pos-types";
+import { clientsService } from "@/lib/services/clients.service";
 import { productsService } from "@/lib/services/products.service";
 
 type PosAction =
   | { type: "set-search"; payload: string }
+  | { type: "set-customer-search"; payload: string }
   | { type: "set-customer"; payload: string | "none" }
   | { type: "add-product"; payload: PosProduct }
   | { type: "increment"; payload: string }
   | { type: "decrement"; payload: string }
-<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
   | { type: "set-quantity"; payload: { productId: string; quantity: number } }
   | { type: "set-note"; payload: { productId: string; note: string } }
-=======
->>>>>>> master
+  | { type: "set-quantity"; payload: { productId: string; quantity: number } }
+  | { type: "set-note"; payload: { productId: string; note: string } }
   | { type: "remove"; payload: string }
   | { type: "clear-cart" };
 
 const initialState: PosState = {
   search: "",
+  customerSearch: "",
   selectedCustomerId: "none",
   cart: [],
-<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
   lastChangedProductId: null,
-=======
->>>>>>> master
+  lastChangedProductId: null,
 };
 
 function reducer(state: PosState, action: PosAction): PosState {
@@ -37,37 +37,29 @@ function reducer(state: PosState, action: PosAction): PosState {
       return { ...state, search: action.payload };
     case "set-customer":
       return { ...state, selectedCustomerId: action.payload };
+    case "set-customer-search":
+      return { ...state, customerSearch: action.payload };
     case "add-product": {
       if (action.payload.stock <= 0) {
         return state;
       }
       const found = state.cart.find((line) => line.product.id === action.payload.id);
       if (!found) {
-<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
         return {
           ...state,
           cart: [{ product: action.payload, quantity: 1 }, ...state.cart],
           lastChangedProductId: action.payload.id,
         };
-=======
-        return { ...state, cart: [{ product: action.payload, quantity: 1 }, ...state.cart] };
->>>>>>> master
       }
 
       return {
         ...state,
         cart: state.cart.map((line) =>
           line.product.id === action.payload.id
-<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
             ? { ...line, quantity: Math.min(line.quantity + 1, line.product.stock, 999) }
             : line,
         ),
         lastChangedProductId: action.payload.id,
-=======
-            ? { ...line, quantity: Math.min(line.quantity + 1, 999) }
-            : line,
-        ),
->>>>>>> master
       };
     }
     case "increment":
@@ -78,10 +70,8 @@ function reducer(state: PosState, action: PosAction): PosState {
             ? { ...line, quantity: Math.min(line.quantity + 1, line.product.stock, 999) }
             : line,
         ),
-<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
         lastChangedProductId: action.payload,
-=======
->>>>>>> master
+        lastChangedProductId: action.payload,
       };
     case "decrement":
       return {
@@ -89,7 +79,6 @@ function reducer(state: PosState, action: PosAction): PosState {
         cart: state.cart
           .map((line) => (line.product.id === action.payload ? { ...line, quantity: line.quantity - 1 } : line))
           .filter((line) => line.quantity > 0),
-<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
         lastChangedProductId: action.payload,
       };
     case "set-quantity":
@@ -124,13 +113,6 @@ function reducer(state: PosState, action: PosAction): PosState {
       };
     case "clear-cart":
       return { ...state, cart: [], lastChangedProductId: null };
-=======
-      };
-    case "remove":
-      return { ...state, cart: state.cart.filter((line) => line.product.id !== action.payload) };
-    case "clear-cart":
-      return { ...state, cart: [] };
->>>>>>> master
     default:
       return state;
   }
@@ -140,11 +122,13 @@ type PosContextShape = {
   state: PosState;
   products: PosProduct[];
   customers: PosCustomer[];
+  filteredCustomers: PosCustomer[];
   filteredProducts: PosProduct[];
   selectedCustomer: PosCustomer | null;
   subtotal: number;
   itemCount: number;
   isLoadingProducts: boolean;
+  isLoadingCustomers: boolean;
   dispatch: React.Dispatch<PosAction>;
 };
 
@@ -157,7 +141,9 @@ function normalize(value: string) {
 export function PosProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [products, setProducts] = useState<PosProduct[]>(POS_MOCK_PRODUCTS);
+  const [customers, setCustomers] = useState<PosCustomer[]>(POS_MOCK_CUSTOMERS);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -199,6 +185,40 @@ export function PosProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadCustomers() {
+      setIsLoadingCustomers(true);
+      try {
+        const remoteClients = await clientsService.getAll(400);
+        if (!isMounted) return;
+
+        const mapped = remoteClients.map((client) => ({
+          id: client.id,
+          name: client.name,
+          document: client.document,
+          phone: client.phone,
+        }));
+
+        setCustomers(mapped.length ? mapped : POS_MOCK_CUSTOMERS);
+      } catch {
+        if (!isMounted) return;
+        setCustomers(POS_MOCK_CUSTOMERS);
+      } finally {
+        if (isMounted) {
+          setIsLoadingCustomers(false);
+        }
+      }
+    }
+
+    void loadCustomers();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const value = useMemo<PosContextShape>(() => {
     const filteredProducts = products.filter((product) => {
       const q = normalize(state.search);
@@ -212,10 +232,21 @@ export function PosProvider({ children }: { children: ReactNode }) {
       );
     });
 
+    const filteredCustomers = customers.filter((customer) => {
+      const q = normalize(state.customerSearch);
+      if (!q) return true;
+
+      return (
+        normalize(customer.name).includes(q) ||
+        normalize(customer.document).includes(q) ||
+        normalize(customer.phone).includes(q)
+      );
+    });
+
     const selectedCustomer =
       state.selectedCustomerId === "none"
         ? null
-        : POS_MOCK_CUSTOMERS.find((customer) => customer.id === state.selectedCustomerId) ?? null;
+        : customers.find((customer) => customer.id === state.selectedCustomerId) ?? null;
 
     const subtotal = state.cart.reduce((sum, line) => sum + line.product.price * line.quantity, 0);
     const itemCount = state.cart.reduce((sum, line) => sum + line.quantity, 0);
@@ -223,15 +254,17 @@ export function PosProvider({ children }: { children: ReactNode }) {
     return {
       state,
       products,
-      customers: POS_MOCK_CUSTOMERS,
+      customers,
+      filteredCustomers,
       filteredProducts,
       selectedCustomer,
       subtotal,
       itemCount,
       isLoadingProducts,
+      isLoadingCustomers,
       dispatch,
     };
-  }, [isLoadingProducts, products, state]);
+  }, [customers, isLoadingCustomers, isLoadingProducts, products, state]);
 
   return <PosContext.Provider value={value}>{children}</PosContext.Provider>;
 }

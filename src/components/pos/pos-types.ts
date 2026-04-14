@@ -14,6 +14,7 @@ export type PosCustomer = {
   id: string;
   name: string;
   document: string;
+  phone: string;
 };
 
 export type PosCartItem = {
@@ -24,6 +25,7 @@ export type PosCartItem = {
 
 export type PosState = {
   search: string;
+  customerSearch: string;
   selectedCustomerId: string | "none";
   cart: PosCartItem[];
   lastChangedProductId: string | null;
