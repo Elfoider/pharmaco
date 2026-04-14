@@ -16,6 +16,10 @@ export function SaleSummary() {
     selectedCustomer,
     hasValidationErrors,
     validationMessages,
+    isClosingSale,
+    closeSaleError,
+    closeSaleSuccess,
+    finalizeSale,
     dispatch,
   } = usePos();
 
@@ -118,8 +122,27 @@ export function SaleSummary() {
         </div>
       ) : null}
 
-      <Button type="button" className="mt-3 h-10 w-full" disabled>
-        Cerrar venta (próxima fase)
+      {closeSaleError ? (
+        <div className="mt-3 rounded-xl border border-rose-300/30 bg-rose-400/10 p-3 text-xs text-rose-100">
+          {closeSaleError}
+        </div>
+      ) : null}
+
+      {closeSaleSuccess ? (
+        <div className="mt-3 rounded-xl border border-emerald-300/30 bg-emerald-400/10 p-3 text-xs text-emerald-100">
+          {closeSaleSuccess}
+        </div>
+      ) : null}
+
+      <Button
+        type="button"
+        className="mt-3 h-10 w-full"
+        disabled={!hasProducts || hasValidationErrors || isClosingSale}
+        onClick={() => {
+          void finalizeSale();
+        }}
+      >
+        {isClosingSale ? "Procesando venta..." : "Finalizar venta"}
       </Button>
     </aside>
   );

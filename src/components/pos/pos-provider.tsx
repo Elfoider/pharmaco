@@ -1,12 +1,13 @@
 "use client";
 
-import { createContext, useContext, useMemo, useReducer, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useReducer, type ReactNode } from "react";
 import { useEffect, useState } from "react";
 
 import { POS_MOCK_CUSTOMERS, POS_MOCK_PRODUCTS } from "@/components/pos/pos-mocks";
 import type { PosCartItem, PosCustomer, PosProduct, PosState } from "@/components/pos/pos-types";
 import { clientsService } from "@/lib/services/clients.service";
 import { productsService } from "@/lib/services/products.service";
+import { salesService } from "@/lib/services/sales.service";
 
 type PosAction =
   | { type: "set-search"; payload: string }
@@ -151,6 +152,10 @@ type PosContextShape = {
   isLoadingCustomers: boolean;
   hasValidationErrors: boolean;
   validationMessages: string[];
+  isClosingSale: boolean;
+  closeSaleError: string | null;
+  closeSaleSuccess: string | null;
+  finalizeSale: () => Promise<boolean>;
   dispatch: React.Dispatch<PosAction>;
 };
 
@@ -166,6 +171,9 @@ export function PosProvider({ children }: { children: ReactNode }) {
   const [customers, setCustomers] = useState<PosCustomer[]>(POS_MOCK_CUSTOMERS);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
   const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
+  const [isClosingSale, setIsClosingSale] = useState(false);
+  const [closeSaleError, setCloseSaleError] = useState<string | null>(null);
+  const [closeSaleSuccess, setCloseSaleSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -241,6 +249,50 @@ export function PosProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const finalizeSale = useCallback(async () => {
+    if (!state.cart.length || isClosingSale) {
+      return false;
+    }
+
+    setIsClosingSale(true);
+    setCloseSaleError(null);
+    setCloseSaleSuccess(null);
+
+    try {
+      const subtotal = state.cart.reduce((sum, line) => sum + line.product.price * line.quantity, 0);
+      const safeDiscount = Math.min(state.manualDiscount, subtotal);
+      const discountedSubtotal = Math.max(0, subtotal - safeDiscount);
+      const taxAmount = discountedSubtotal * (state.taxPercent / 100);
+      const finalTotal = discountedSubtotal + taxAmount;
+
+      const result = await salesService.finalizePosSale({
+        cashierId: undefined,
+        clientId: state.selectedCustomerId === "none" ? null : state.selectedCustomerId,
+        subtotal,
+        discount: safeDiscount,
+        tax: taxAmount,
+        total: finalTotal,
+        paymentMethod: state.paymentMethod,
+        items: state.cart.map((line) => ({
+          productId: line.product.id,
+          productName: line.product.name,
+          qty: line.quantity,
+          unitPrice: line.product.price,
+          subtotal: line.product.price * line.quantity,
+        })),
+      });
+
+      dispatch({ type: "clear-cart" });
+      setCloseSaleSuccess(`Venta ${result.saleNumber} registrada correctamente.`);
+      return true;
+    } catch (error) {
+      setCloseSaleError(error instanceof Error ? error.message : "No fue posible registrar la venta.");
+      return false;
+    } finally {
+      setIsClosingSale(false);
+    }
+  }, [dispatch, isClosingSale, state.cart, state.manualDiscount, state.paymentMethod, state.selectedCustomerId, state.taxPercent]);
+
   const value = useMemo<PosContextShape>(() => {
     const filteredProducts = products.filter((product) => {
       const q = normalize(state.search);
@@ -304,9 +356,13 @@ export function PosProvider({ children }: { children: ReactNode }) {
       isLoadingCustomers,
       hasValidationErrors: validationMessages.length > 0,
       validationMessages,
+      isClosingSale,
+      closeSaleError,
+      closeSaleSuccess,
+      finalizeSale,
       dispatch,
     };
-  }, [customers, isLoadingCustomers, isLoadingProducts, products, state]);
+  }, [closeSaleError, closeSaleSuccess, customers, finalizeSale, isClosingSale, isLoadingCustomers, isLoadingProducts, products, state]);
 
   return <PosContext.Provider value={value}>{children}</PosContext.Provider>;
 }
