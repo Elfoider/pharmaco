@@ -6,7 +6,11 @@ import { Button } from "@/components/ui/button";
 import { usePos } from "@/components/pos/pos-provider";
 
 export function SaleCart() {
+<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
+  const { state, dispatch, subtotal } = usePos();
+=======
   const { state, dispatch } = usePos();
+>>>>>>> master
 
   return (
     <div className="rounded-2xl border border-white/10 bg-slate-950/35 p-3">
@@ -18,7 +22,18 @@ export function SaleCart() {
       <div className="space-y-2">
         {state.cart.length ? (
           state.cart.map((line) => (
+<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
+            <div
+              key={line.product.id}
+              className={`rounded-xl border bg-white/[0.02] p-2 transition ${
+                state.lastChangedProductId === line.product.id
+                  ? "border-cyan-300/45 shadow-[0_0_0_1px_rgba(103,232,249,0.25)]"
+                  : "border-white/10"
+              }`}
+            >
+=======
             <div key={line.product.id} className="rounded-xl border border-white/10 bg-white/[0.02] p-2">
+>>>>>>> master
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-sm font-medium text-slate-100">{line.product.name}</p>
@@ -47,12 +62,52 @@ export function SaleCart() {
                     type="button"
                     className="h-7 w-7 px-0"
                     onClick={() => dispatch({ type: "increment", payload: line.product.id })}
+<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
+                    disabled={line.quantity >= line.product.stock}
+=======
+>>>>>>> master
                   >
                     <Plus className="h-3 w-3" />
                   </Button>
                 </div>
                 <span className="font-semibold text-cyan-100">${(line.product.price * line.quantity).toFixed(2)}</span>
               </div>
+<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
+
+              <div className="mt-2 grid gap-2 sm:grid-cols-[120px_minmax(0,1fr)]">
+                <label className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
+                  Cantidad
+                  <input
+                    type="number"
+                    min={1}
+                    max={line.product.stock}
+                    value={line.quantity}
+                    onChange={(event) =>
+                      dispatch({
+                        type: "set-quantity",
+                        payload: { productId: line.product.id, quantity: Number(event.target.value) },
+                      })
+                    }
+                    className="mt-1 h-9 w-full rounded-lg border border-white/15 bg-slate-950/65 px-2 text-sm text-slate-100 outline-none focus:border-cyan-300/80"
+                  />
+                </label>
+                <label className="text-[11px] uppercase tracking-[0.16em] text-slate-400">
+                  Observación (opcional)
+                  <input
+                    value={line.note ?? ""}
+                    onChange={(event) =>
+                      dispatch({
+                        type: "set-note",
+                        payload: { productId: line.product.id, note: event.target.value },
+                      })
+                    }
+                    placeholder="Ej: fraccionado / preferencia del cliente"
+                    className="mt-1 h-9 w-full rounded-lg border border-white/15 bg-slate-950/65 px-2 text-sm text-slate-100 outline-none focus:border-cyan-300/80"
+                  />
+                </label>
+              </div>
+=======
+>>>>>>> master
             </div>
           ))
         ) : (
@@ -61,6 +116,14 @@ export function SaleCart() {
           </p>
         )}
       </div>
+<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
+
+      <div className="mt-3 rounded-xl border border-cyan-300/25 bg-cyan-400/10 p-3">
+        <p className="text-xs uppercase tracking-[0.16em] text-cyan-100">Total acumulado</p>
+        <p className="text-xl font-semibold text-cyan-50">${subtotal.toFixed(2)}</p>
+      </div>
+=======
+>>>>>>> master
     </div>
   );
 }

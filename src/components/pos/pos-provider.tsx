@@ -13,6 +13,11 @@ type PosAction =
   | { type: "add-product"; payload: PosProduct }
   | { type: "increment"; payload: string }
   | { type: "decrement"; payload: string }
+<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
+  | { type: "set-quantity"; payload: { productId: string; quantity: number } }
+  | { type: "set-note"; payload: { productId: string; note: string } }
+=======
+>>>>>>> master
   | { type: "remove"; payload: string }
   | { type: "clear-cart" };
 
@@ -20,6 +25,10 @@ const initialState: PosState = {
   search: "",
   selectedCustomerId: "none",
   cart: [],
+<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
+  lastChangedProductId: null,
+=======
+>>>>>>> master
 };
 
 function reducer(state: PosState, action: PosAction): PosState {
@@ -34,16 +43,31 @@ function reducer(state: PosState, action: PosAction): PosState {
       }
       const found = state.cart.find((line) => line.product.id === action.payload.id);
       if (!found) {
+<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
+        return {
+          ...state,
+          cart: [{ product: action.payload, quantity: 1 }, ...state.cart],
+          lastChangedProductId: action.payload.id,
+        };
+=======
         return { ...state, cart: [{ product: action.payload, quantity: 1 }, ...state.cart] };
+>>>>>>> master
       }
 
       return {
         ...state,
         cart: state.cart.map((line) =>
           line.product.id === action.payload.id
+<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
+            ? { ...line, quantity: Math.min(line.quantity + 1, line.product.stock, 999) }
+            : line,
+        ),
+        lastChangedProductId: action.payload.id,
+=======
             ? { ...line, quantity: Math.min(line.quantity + 1, 999) }
             : line,
         ),
+>>>>>>> master
       };
     }
     case "increment":
@@ -54,6 +78,10 @@ function reducer(state: PosState, action: PosAction): PosState {
             ? { ...line, quantity: Math.min(line.quantity + 1, line.product.stock, 999) }
             : line,
         ),
+<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
+        lastChangedProductId: action.payload,
+=======
+>>>>>>> master
       };
     case "decrement":
       return {
@@ -61,11 +89,48 @@ function reducer(state: PosState, action: PosAction): PosState {
         cart: state.cart
           .map((line) => (line.product.id === action.payload ? { ...line, quantity: line.quantity - 1 } : line))
           .filter((line) => line.quantity > 0),
+<<<<<<< codex/build-phase-1-for-pharmaco-system-j09le6
+        lastChangedProductId: action.payload,
+      };
+    case "set-quantity":
+      return {
+        ...state,
+        cart: state.cart.map((line) => {
+          if (line.product.id !== action.payload.productId) {
+            return line;
+          }
+
+          return {
+            ...line,
+            quantity: Number.isFinite(action.payload.quantity)
+              ? Math.max(1, Math.min(action.payload.quantity, line.product.stock, 999))
+              : line.quantity,
+          };
+        }),
+        lastChangedProductId: action.payload.productId,
+      };
+    case "set-note":
+      return {
+        ...state,
+        cart: state.cart.map((line) =>
+          line.product.id === action.payload.productId ? { ...line, note: action.payload.note } : line,
+        ),
+      };
+    case "remove":
+      return {
+        ...state,
+        cart: state.cart.filter((line) => line.product.id !== action.payload),
+        lastChangedProductId: action.payload,
+      };
+    case "clear-cart":
+      return { ...state, cart: [], lastChangedProductId: null };
+=======
       };
     case "remove":
       return { ...state, cart: state.cart.filter((line) => line.product.id !== action.payload) };
     case "clear-cart":
       return { ...state, cart: [] };
+>>>>>>> master
     default:
       return state;
   }
