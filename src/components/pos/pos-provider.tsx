@@ -176,6 +176,17 @@ type PosContextShape = {
   isClosingSale: boolean;
   closeSaleError: string | null;
   closeSaleSuccess: string | null;
+  lastCompletedSale: {
+    saleId: string;
+    saleNumber: string;
+    total: number;
+    customerName: string | null;
+    paymentMethod: "cash" | "card" | "transfer" | "mixed";
+    productCount: number;
+    itemCount: number;
+  } | null;
+  isSuccessModalOpen: boolean;
+  closeSuccessModal: () => void;
   finalizeSale: () => Promise<boolean>;
   dispatch: React.Dispatch<PosAction>;
 };
@@ -197,6 +208,8 @@ export function PosProvider({ children }: { children: ReactNode }) {
   const [isClosingSale, setIsClosingSale] = useState(false);
   const [closeSaleError, setCloseSaleError] = useState<string | null>(null);
   const [closeSaleSuccess, setCloseSaleSuccess] = useState<string | null>(null);
+  const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+  const [lastCompletedSale, setLastCompletedSale] = useState<PosContextShape["lastCompletedSale"]>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -322,6 +335,12 @@ export function PosProvider({ children }: { children: ReactNode }) {
       const discountedSubtotal = Math.max(0, subtotal - safeDiscount);
       const taxAmount = discountedSubtotal * (state.taxPercent / 100);
       const finalTotal = discountedSubtotal + taxAmount;
+      const itemCount = state.cart.reduce((sum, line) => sum + line.quantity, 0);
+      const productCount = state.cart.length;
+      const customerName =
+        state.selectedCustomerId === "none"
+          ? null
+          : customers.find((customer) => customer.id === state.selectedCustomerId)?.name ?? null;
 
       const result = await salesService.finalizePosSale({
         cashierId: undefined,
@@ -343,6 +362,16 @@ export function PosProvider({ children }: { children: ReactNode }) {
 
       dispatch({ type: "clear-cart" });
       setCloseSaleSuccess(`Venta ${result.saleNumber} registrada correctamente.`);
+      setLastCompletedSale({
+        saleId: result.saleId,
+        saleNumber: result.saleNumber,
+        total: finalTotal,
+        customerName,
+        paymentMethod: state.paymentMethod,
+        productCount,
+        itemCount,
+      });
+      setIsSuccessModalOpen(true);
       return true;
     } catch (error) {
       setCloseSaleError(error instanceof Error ? error.message : "No fue posible registrar la venta.");
@@ -350,7 +379,11 @@ export function PosProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsClosingSale(false);
     }
-  }, [dispatch, isClosingSale, state.cart, state.manualDiscount, state.paymentMethod, state.selectedCustomerId, state.taxPercent]);
+  }, [customers, dispatch, isClosingSale, state.cart, state.manualDiscount, state.paymentMethod, state.selectedCustomerId, state.taxPercent]);
+
+  const closeSuccessModal = useCallback(() => {
+    setIsSuccessModalOpen(false);
+  }, []);
 
   const value = useMemo<PosContextShape>(() => {
     const filteredProducts = products.filter((product) => {
@@ -460,10 +493,13 @@ export function PosProvider({ children }: { children: ReactNode }) {
       isClosingSale,
       closeSaleError,
       closeSaleSuccess,
+      lastCompletedSale,
+      isSuccessModalOpen,
+      closeSuccessModal,
       finalizeSale,
       dispatch,
     };
-  }, [batches, closeSaleError, closeSaleSuccess, customers, finalizeSale, isClosingSale, isLoadingBatches, isLoadingCustomers, isLoadingProducts, products, state]);
+  }, [batches, closeSaleError, closeSaleSuccess, closeSuccessModal, customers, finalizeSale, isClosingSale, isLoadingBatches, isLoadingCustomers, isLoadingProducts, isSuccessModalOpen, lastCompletedSale, products, state]);
 
   return <PosContext.Provider value={value}>{children}</PosContext.Provider>;
 }

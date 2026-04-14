@@ -18,7 +18,6 @@ export function SaleSummary() {
     validationMessages,
     isClosingSale,
     closeSaleError,
-    closeSaleSuccess,
     finalizeSale,
     dispatch,
   } = usePos();
@@ -125,12 +124,6 @@ export function SaleSummary() {
       {closeSaleError ? (
         <div className="mt-3 rounded-xl border border-rose-300/30 bg-rose-400/10 p-3 text-xs text-rose-100">
           {closeSaleError}
-        </div>
-      ) : null}
-
-      {closeSaleSuccess ? (
-        <div className="mt-3 rounded-xl border border-emerald-300/30 bg-emerald-400/10 p-3 text-xs text-emerald-100">
-          {closeSaleSuccess}
         </div>
       ) : null}
 

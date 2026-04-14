@@ -6,6 +6,7 @@ import { CustomerSelector } from "@/components/pos/customer-selector";
 import { ProductResults } from "@/components/pos/product-results";
 import { ProductSearch } from "@/components/pos/product-search";
 import { SaleCart } from "@/components/pos/sale-cart";
+import { SaleSuccessModal } from "@/components/pos/sale-success-modal";
 import { SaleSummary } from "@/components/pos/sale-summary";
 import { usePos } from "@/components/pos/pos-provider";
 import { GlassPanel } from "@/components/ui/glass-panel";
@@ -26,7 +27,7 @@ export function PosShell() {
           <ModuleStat label="Resultados" value={String(filteredProducts.length)} />
           <ModuleStat label="Items venta" value={String(itemCount)} />
           <ModuleStat label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
-          <ModuleStat label="Modo" value="Sin cierre real" />
+          <ModuleStat label="Modo" value="Cierre real activo" />
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[1.2fr_1fr_340px]">
@@ -43,6 +44,7 @@ export function PosShell() {
           <SaleSummary />
         </div>
       </div>
+      <SaleSuccessModal />
     </main>
   );
 }
