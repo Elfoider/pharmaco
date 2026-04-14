@@ -5,6 +5,7 @@ import type {
   TimeSeries,
   TrendSummary,
 } from "@/modules/analytics/types";
+import { calculateSlopeAndIntercept, predictFutureValue } from "@/lib/analytics/linear-regression";
 
 function safeDiv(numerator: number, denominator: number) {
   if (!Number.isFinite(numerator) || !Number.isFinite(denominator) || denominator === 0) {
@@ -26,13 +27,8 @@ export function linearRegression(points: RegressionPoint[]): LinearRegressionRes
   }
 
   const n = points.length;
-  const sumX = points.reduce((acc, point) => acc + point.x, 0);
+  const { slope, intercept } = calculateSlopeAndIntercept(points);
   const sumY = points.reduce((acc, point) => acc + point.y, 0);
-  const sumXY = points.reduce((acc, point) => acc + point.x * point.y, 0);
-  const sumX2 = points.reduce((acc, point) => acc + point.x * point.x, 0);
-
-  const slope = safeDiv(n * sumXY - sumX * sumY, n * sumX2 - sumX * sumX);
-  const intercept = safeDiv(sumY - slope * sumX, n);
 
   const meanY = safeDiv(sumY, n);
   const ssTot = points.reduce((acc, point) => acc + (point.y - meanY) ** 2, 0);
@@ -59,7 +55,7 @@ export function predictNextValue(series: TimeSeries, regression?: LinearRegressi
     regression ??
     linearRegression(series.points.map((point, index) => ({ x: index, y: point.value })));
   const baseIndex = series.points.length;
-  const predictedValue = Math.max(0, model.slope * baseIndex + model.intercept);
+  const predictedValue = Math.max(0, predictFutureValue(model, baseIndex).predictedValue);
 
   return {
     baseIndex,
