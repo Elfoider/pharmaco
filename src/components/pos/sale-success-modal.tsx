@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2, Printer, ReceiptText, RotateCcw, Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -73,7 +74,7 @@ export function SaleSuccessModal() {
             </div>
           ) : null}
 
-          <div className="grid gap-2 sm:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
             <Button type="button" onClick={closeSuccessModal} className="h-10">
               <RotateCcw className="mr-2 h-4 w-4" />
               Nueva venta
@@ -94,6 +95,14 @@ export function SaleSuccessModal() {
               <Printer className="mr-2 h-4 w-4" />
               Imprimir ticket
             </Button>
+            <Link href="/dashboard/pos/devoluciones" className="block">
+              <Button
+                type="button"
+                className="h-10 w-full border border-cyan-300/35 bg-cyan-500/15 text-cyan-100 shadow-none hover:bg-cyan-500/25"
+              >
+                Devoluciones
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

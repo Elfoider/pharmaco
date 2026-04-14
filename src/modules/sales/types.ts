@@ -1,1 +1,1 @@
-export type { Sale, SaleItem } from "@/modules/shared/types";
+export type { Sale, SaleItem, SaleReturn, SaleReturnItem } from "@/modules/shared/types";

@@ -10,6 +10,7 @@ import { SaleSuccessModal } from "@/components/pos/sale-success-modal";
 import { SaleSummary } from "@/components/pos/sale-summary";
 import { usePos } from "@/components/pos/pos-provider";
 import { GlassPanel } from "@/components/ui/glass-panel";
+import Link from "next/link";
 
 export function PosShell() {
   const { filteredProducts, itemCount, subtotal } = usePos();
@@ -28,6 +29,15 @@ export function PosShell() {
           <ModuleStat label="Items venta" value={String(itemCount)} />
           <ModuleStat label="Subtotal" value={`$${subtotal.toFixed(2)}`} />
           <ModuleStat label="Modo" value="Cierre real activo" />
+        </div>
+
+        <div className="flex justify-end">
+          <Link
+            href="/dashboard/pos/devoluciones"
+            className="inline-flex h-9 items-center justify-center rounded-xl border border-cyan-300/30 bg-cyan-500/10 px-3 text-xs font-semibold uppercase tracking-[0.14em] text-cyan-100 hover:bg-cyan-500/20"
+          >
+            Devoluciones (próximamente)
+          </Link>
         </div>
 
         <div className="grid gap-4 xl:grid-cols-[1.2fr_1fr_340px]">

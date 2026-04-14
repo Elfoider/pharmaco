@@ -1,7 +1,7 @@
 import { collection, doc, getDocs, orderBy, query, runTransaction, serverTimestamp, where } from "firebase/firestore";
 
 import { auth, db } from "@/lib/firebase/client";
-import type { Sale, SaleItem } from "@/modules/sales/types";
+import type { Sale, SaleItem, SaleReturn, SaleReturnItem } from "@/modules/sales/types";
 import { COLLECTIONS, createCrudService } from "@/lib/services/_firestore";
 
 export type PosFinalizeItemInput = {
@@ -83,11 +83,17 @@ export const salesService = {
         saleNumber,
         cashierUserId: input.cashierId ?? auth?.currentUser?.uid ?? "cashier-local",
         clientId: input.clientId,
+        saleItemIds: [] as string[],
+        itemTypesCount: input.items.length,
+        itemsQuantityTotal: input.items.reduce((sum, item) => sum + item.qty, 0),
         subtotal: input.subtotal,
         discountTotal: input.discount,
         taxTotal: input.tax,
         total: input.total,
         paymentMethod: input.paymentMethod,
+        returnStatus: "none" as const,
+        returnedItemsQuantity: 0,
+        returnedAmountTotal: 0,
         createdAt: now,
         updatedAt: now,
         createdAtServer: serverTimestamp(),
@@ -95,6 +101,8 @@ export const salesService = {
       };
 
       transaction.set(saleRef, salePayload);
+
+      const saleItemIds: string[] = [];
 
       for (const item of input.items) {
         const batchIds = batchOrderByProduct.get(item.productId) ?? [];
@@ -178,6 +186,7 @@ export const salesService = {
         });
 
         const itemRef = doc(saleItemsCollection);
+        saleItemIds.push(itemRef.id);
 
         const itemPayload: Omit<SaleItem, "id"> & {
           productName: string;
@@ -186,8 +195,12 @@ export const salesService = {
         } = {
           status: "active",
           saleId: saleRef.id,
+          saleNumber,
           productId: item.productId,
           quantity: item.qty,
+          originalQuantity: item.qty,
+          returnedQuantity: 0,
+          returnStatus: "none",
           qty: item.qty,
           unitPrice: item.unitPrice,
           subtotal: item.subtotal,
@@ -205,6 +218,12 @@ export const salesService = {
         });
       }
 
+      transaction.update(saleRef, {
+        saleItemIds,
+        updatedAt: now,
+        updatedAtServer: serverTimestamp(),
+      });
+
       return {
         saleId: saleRef.id,
         saleNumber,
@@ -214,3 +233,5 @@ export const salesService = {
 };
 
 export const saleItemsService = createCrudService<SaleItem>(COLLECTIONS.saleItems);
+export const saleReturnsService = createCrudService<SaleReturn>(COLLECTIONS.saleReturns);
+export const saleReturnItemsService = createCrudService<SaleReturnItem>(COLLECTIONS.saleReturnItems);
