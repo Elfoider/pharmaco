@@ -1,9 +1,11 @@
 "use client";
 
 import { createContext, useContext, useMemo, useReducer, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 
 import { POS_MOCK_CUSTOMERS, POS_MOCK_PRODUCTS } from "@/components/pos/pos-mocks";
 import type { PosCartItem, PosCustomer, PosProduct, PosState } from "@/components/pos/pos-types";
+import { productsService } from "@/lib/services/products.service";
 
 type PosAction =
   | { type: "set-search"; payload: string }
@@ -27,6 +29,9 @@ function reducer(state: PosState, action: PosAction): PosState {
     case "set-customer":
       return { ...state, selectedCustomerId: action.payload };
     case "add-product": {
+      if (action.payload.stock <= 0) {
+        return state;
+      }
       const found = state.cart.find((line) => line.product.id === action.payload.id);
       if (!found) {
         return { ...state, cart: [{ product: action.payload, quantity: 1 }, ...state.cart] };
@@ -45,7 +50,9 @@ function reducer(state: PosState, action: PosAction): PosState {
       return {
         ...state,
         cart: state.cart.map((line) =>
-          line.product.id === action.payload ? { ...line, quantity: Math.min(line.quantity + 1, 999) } : line,
+          line.product.id === action.payload
+            ? { ...line, quantity: Math.min(line.quantity + 1, line.product.stock, 999) }
+            : line,
         ),
       };
     case "decrement":
@@ -72,6 +79,7 @@ type PosContextShape = {
   selectedCustomer: PosCustomer | null;
   subtotal: number;
   itemCount: number;
+  isLoadingProducts: boolean;
   dispatch: React.Dispatch<PosAction>;
 };
 
@@ -83,9 +91,51 @@ function normalize(value: string) {
 
 export function PosProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [products, setProducts] = useState<PosProduct[]>(POS_MOCK_PRODUCTS);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProducts() {
+      setIsLoadingProducts(true);
+      try {
+        const remoteProducts = await productsService.getAll(500);
+
+        if (!isMounted) return;
+
+        const mapped = remoteProducts.map((product) => ({
+          id: product.id,
+          name: product.name,
+          genericName: product.genericName,
+          sku: product.sku,
+          barcode: product.barcode,
+          price: product.salePrice,
+          stock: product.stock,
+          requiresPrescription: product.requiresPrescription,
+          controlled: product.controlled,
+        }));
+
+        setProducts(mapped.length ? mapped : POS_MOCK_PRODUCTS);
+      } catch {
+        if (!isMounted) return;
+        setProducts(POS_MOCK_PRODUCTS);
+      } finally {
+        if (isMounted) {
+          setIsLoadingProducts(false);
+        }
+      }
+    }
+
+    void loadProducts();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const value = useMemo<PosContextShape>(() => {
-    const filteredProducts = POS_MOCK_PRODUCTS.filter((product) => {
+    const filteredProducts = products.filter((product) => {
       const q = normalize(state.search);
       if (!q) return true;
 
@@ -107,15 +157,16 @@ export function PosProvider({ children }: { children: ReactNode }) {
 
     return {
       state,
-      products: POS_MOCK_PRODUCTS,
+      products,
       customers: POS_MOCK_CUSTOMERS,
       filteredProducts,
       selectedCustomer,
       subtotal,
       itemCount,
+      isLoadingProducts,
       dispatch,
     };
-  }, [state]);
+  }, [isLoadingProducts, products, state]);
 
   return <PosContext.Provider value={value}>{children}</PosContext.Provider>;
 }

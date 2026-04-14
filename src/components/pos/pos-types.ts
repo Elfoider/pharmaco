@@ -6,6 +6,8 @@ export type PosProduct = {
   barcode: string;
   price: number;
   stock: number;
+  requiresPrescription: boolean;
+  controlled: boolean;
 };
 
 export type PosCustomer = {

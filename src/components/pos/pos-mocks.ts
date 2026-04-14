@@ -9,6 +9,8 @@ export const POS_MOCK_PRODUCTS: PosProduct[] = [
     barcode: "7701234567891",
     price: 2.5,
     stock: 120,
+    requiresPrescription: false,
+    controlled: false,
   },
   {
     id: "prd-2",
@@ -18,6 +20,8 @@ export const POS_MOCK_PRODUCTS: PosProduct[] = [
     barcode: "7701234567892",
     price: 3.2,
     stock: 80,
+    requiresPrescription: false,
+    controlled: false,
   },
   {
     id: "prd-3",
@@ -27,6 +31,8 @@ export const POS_MOCK_PRODUCTS: PosProduct[] = [
     barcode: "7701234567901",
     price: 4.75,
     stock: 35,
+    requiresPrescription: true,
+    controlled: false,
   },
 ];
 
