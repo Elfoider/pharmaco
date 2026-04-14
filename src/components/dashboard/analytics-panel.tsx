@@ -66,15 +66,23 @@ export function AnalyticsPanel({ report }: { report?: AnalyticsPredictionReport 
 
   if (!activeReport) {
     return (
-      <section className="rounded-2xl border border-cyan-300/20 bg-slate-950/50 p-4 text-sm text-slate-300">
-        {hasError ? "No fue posible cargar la analítica mock." : "Cargando analítica predictiva..."}
-      </section>
-    );
+        <section className="rounded-2xl border border-cyan-300/20 bg-slate-950/50 p-4 text-sm text-slate-300">
+          {hasError ? "No fue posible cargar la analítica desde Firestore." : "Cargando analítica predictiva..."}
+        </section>
+      );
   }
 
   const chartSeries = toDashboardChartSeries(activeReport.series);
   const metricValues = chartSeries.points.map((point) => point.y);
   const isUp = activeReport.trend.direction !== "down";
+
+  if (!chartSeries.points.length) {
+    return (
+      <section className="rounded-2xl border border-cyan-300/20 bg-slate-950/50 p-4 text-sm text-slate-300">
+        No hay datos históricos suficientes en Firestore para construir la predicción.
+      </section>
+    );
+  }
 
   return (
     <section className="rounded-2xl border border-cyan-300/20 bg-slate-950/50 p-4">
